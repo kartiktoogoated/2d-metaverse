@@ -17,6 +17,7 @@ adminRouter.post("/avatar",(req,res)=>{
 adminRouter.post("/map",(req,res)=>{
     
 })
-adminRouter.get("/:spaceId",(req,res)=>{
+
+// adminRouter.get("/:spaceId",(req,res)=>{
     
-})
+// })
