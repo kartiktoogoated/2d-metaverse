@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b",
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -11,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@types/express": "^5.0.0",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "typescript": "^5.7.3"
   }
 }
