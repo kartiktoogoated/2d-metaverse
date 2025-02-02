@@ -4,6 +4,7 @@ import { adminRouter } from "./admin";
 import { spaceRouter } from "./space";
 export const router = Router();
 
+
 router.post("/signup",(req,res)=>{
     res.json({
         message:"Signup"

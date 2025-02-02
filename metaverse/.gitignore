@@ -12,10 +12,20 @@ node_modules
 .env.test.local
 .env.production.local
 
+# Prisma
+prisma/.env
+prisma/migrations/
+prisma/dev.db
+prisma/generated/
+
+# Docker
+docker-data/
+postgres-data/
+
 # Testing
 coverage
 
-# Turbo
+# TurboRepo
 .turbo
 
 # Vercel
@@ -25,14 +35,17 @@ coverage
 .next/
 out/
 build
-dist
+dist/
 
-
-# Debug
+# Logs & Debugging
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+*.log
 
 # Misc
 .DS_Store
 *.pem
+.idea/
+.vscode/
