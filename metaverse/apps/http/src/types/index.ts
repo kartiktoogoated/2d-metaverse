@@ -54,3 +54,12 @@ export const CreateMapSchema = z.object({
     }))
 
 })
+
+declare global {
+    namespace Express {
+        export interface Request {
+            role?:"ADMIN"|"USER";
+            userId?:string;
+        }
+    }
+}
