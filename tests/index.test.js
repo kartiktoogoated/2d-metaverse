@@ -40,8 +40,8 @@ const axios = {
 
 describe("Authentication", () => {
     test('User is able to sign up only once', async () => {
-        const username = "kartik" + Math.random(); // kirat0.12331313
-        const password = "123456";
+        const username = `kartik-${Math.random()}`; 
+        const password = "123abc";
         const response = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
             username,
             password,
