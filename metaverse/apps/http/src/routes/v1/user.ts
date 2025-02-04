@@ -22,7 +22,24 @@ userRouter.post("/metadata",userMiddleware, async(req,res)=>{
     res.json({message:"Metadata updated"})
 })
 
-userRouter.get("/metadata/bulk",(req,res)=>{
-    const userIds = req.query.ids
-    console.log(userIds);
+userRouter.get("/metadata/bulk",async (req,res)=>{
+    const userIdString = (req.query.ids ?? "[]") as string
+    const userIds = (userIdString).slice(1, userIdString.length - 22).split(",");
+
+    const metadata = await client.user.findMany({
+        where: {
+            id: {
+                in: userIds
+            }
+        }, select: {
+            id: true,
+            avatar: true
+        }
+    })
+    res.json({
+        avatars: metadata.map(m =>({
+            userId: m.id,
+            avatarId: m.avatar?.imageUrl
+        }))
+    })
 })
