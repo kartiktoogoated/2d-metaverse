@@ -2,7 +2,6 @@ import e, { Router } from "express";
 import { userMiddleware } from "../../middleware/user";
 import client from "@repo/db/client"
 import { AddElementSchema, CreateElementSchema, CreateSpacesSchema, DeleteElementSchema } from "../../types";
-import { adminMiddleware } from "../../middleware/admin";
 export const spaceRouter = Router();
 
 spaceRouter.post("/", userMiddleware ,async (req,res)=>{

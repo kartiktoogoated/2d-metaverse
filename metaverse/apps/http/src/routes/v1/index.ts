@@ -75,16 +75,18 @@ router.post("/signin", async (req, res) => {
     }
 })
 
-router.get("/elements",(req,res)=>{
-    res.json({
-        message:"elements"
-    })
+router.get("/elements",async(req,res)=>{
+    const elements = await client.element.findMany()
+    res.json({})
 })
 
-router.get("/avatars",(req,res)=>{
-    res.json({
-        message:"avatars"
-    })
+router.get("/avatars",async(req,res)=>{
+    const avatars = await client.avatar.findMany()
+    res.json({avatars:avatars.map(x=>({
+        id:x.id,
+        imageUrl:x.imageUrl,
+        name:x.name
+    }))})
 })
 
 router.use("/user",userRouter)
