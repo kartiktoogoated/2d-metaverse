@@ -1,7 +1,7 @@
 import { Router } from "express";
 import client from "@repo/db/client";   
 import { adminMiddleware } from "../../middleware/admin";
-import { AddElementSchema, createAvatarSchema, CreateElementSchema, CreateMapSchema, UpdateElementSchema } from "../../types";
+import {  createAvatarSchema, CreateElementSchema, CreateMapSchema, UpdateElementSchema } from "../../types";
 
 export const adminRouter = Router();
 
