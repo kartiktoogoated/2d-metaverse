@@ -1,20 +1,21 @@
 import { Router } from "express";
 import { userRouter } from "./user";
-import { adminRouter } from "./admin";
 import { spaceRouter } from "./space";
+import { adminRouter } from "./admin";
 import { SigninSchema, SignupSchema } from "../../types";
+import {hash, compare} from "../../scrypt";
 import client from "@repo/db/client";
-import { hash, compare } from "../../scrypt";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import { JWT_PASSWORD } from "../../config";
 
 export const router = Router();
 
-
 router.post("/signup", async (req, res) => {
+    console.log("inside signup")
     // check the user
     const parsedData = SignupSchema.safeParse(req.body)
     if (!parsedData.success) {
+        console.log("parsed data incorrect")
         res.status(400).json({message: "Validation failed"})
         return
     }
@@ -33,6 +34,8 @@ router.post("/signup", async (req, res) => {
             userId: user.id
         })
     } catch(e) {
+        console.log("erroer thrown")
+        console.log(e)
         res.status(400).json({message: "User already exists"})
     }
 })
@@ -75,20 +78,27 @@ router.post("/signin", async (req, res) => {
     }
 })
 
-router.get("/elements",async(req,res)=>{
+router.get("/elements", async (req, res) => {
     const elements = await client.element.findMany()
-    res.json({})
-})
 
-router.get("/avatars",async(req,res)=>{
-    const avatars = await client.avatar.findMany()
-    res.json({avatars:avatars.map(x=>({
-        id:x.id,
-        imageUrl:x.imageUrl,
-        name:x.name
+    res.json({elements: elements.map(e => ({
+        id: e.id,
+        imageUrl: e.imageUrl,
+        width: e.width,
+        height: e.height,
+        static: e.static
     }))})
 })
 
-router.use("/user",userRouter)
-router.use("/admin",adminRouter)
-router.use("/space",spaceRouter)
+router.get("/avatars", async (req, res) => {
+    const avatars = await client.avatar.findMany()
+    res.json({avatars: avatars.map(x => ({
+        id: x.id,
+        imageUrl: x.imageUrl,
+        name: x.name
+    }))})
+})
+
+router.use("/user", userRouter)
+router.use("/space", spaceRouter)
+router.use("/admin", adminRouter)
