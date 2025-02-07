@@ -21,7 +21,7 @@ export const adminMiddleware = (req: Request, res: Response, next: NextFunction)
     if (!token) return sendUnauthorizedResponse(res);
 
     const decoded = verifyToken(token);
-    if (!decoded || decoded.role !== "ADMIN") return sendUnauthorizedResponse(res);
+    if (!decoded || decoded.role !== "Admin") return sendUnauthorizedResponse(res);
 
     req.userId = decoded.userId;
     next();
