@@ -12,9 +12,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "esbuild": "^0.24.0",
+    "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@repo/db": "workspace:*",
     "@types/ws": "^8.5.14"
   }
 }
