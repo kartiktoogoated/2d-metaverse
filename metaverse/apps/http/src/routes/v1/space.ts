@@ -68,7 +68,6 @@ spaceRouter.post("/", userMiddleware, async (req, res) => {
     res.json({spaceId: space.id})
 })
 
-
 spaceRouter.delete("/element", userMiddleware, async (req, res) => {
     console.log("spaceElement?.space1 ")
     const parsedData = DeleteElementSchema.safeParse(req.body)

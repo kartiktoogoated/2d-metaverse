@@ -12,6 +12,7 @@ userRouter.post("/metadata", userMiddleware, async (req, res) => {
         res.status(400).json({message: "Validation failed"})
         return
     }
+    
     try {
         await client.user.update({
             where: {
