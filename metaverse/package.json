@@ -1,6 +1,10 @@
 {
   "name": "metaverse",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -8,11 +12,14 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "prettier": "^3.4.2",
-    "turbo": "^2.4.0",
-    "typescript": "5.7.3"
+    "prettier": "^3.2.5",
+    "turbo": "^2.2.3",
+    "typescript": "5.5.4"
   },
-  "packageManager": "pnpm@9.0.0",
+  "optionalDependencies": {
+    "rollup": "^4.34.6"
+  },
+  "packageManager": "pnpm@9.12.2",
   "engines": {
     "node": ">=18"
   }
