@@ -1,11 +1,11 @@
 # Use Node.js 18 (ARM64 support for Mac M1/M2)
-FROM --platform=linux/arm64 node:18 AS base
-
+FROM --platform=linux/amd64 node:18-bullseye AS base
 # Set working directory
 WORKDIR /app
 
 # Install pnpm globally
-RUN npm install -g pnpm@9.12.2
+RUN corepack enable && corepack prepare pnpm@9.12.2 --activate
+
 
 # ✅ Set pnpm store location inside the container (avoids conflicts with macOS)
 RUN pnpm config set store-dir /app/.pnpm-store
