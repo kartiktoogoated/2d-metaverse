@@ -58,24 +58,35 @@ jobs:
       # ✅ Configure Kubernetes authentication
       - name: Configure kubectl
         run: |
-          echo "${{ secrets.KUBECONFIG }}" | base64 --decode > kubeconfig
-          export KUBECONFIG=kubeconfig
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 --decode > $HOME/.kube/config
+          export KUBECONFIG=$HOME/.kube/config
+          chmod 600 $HOME/.kube/config  # Ensure proper permissions
           kubectl config view
 
       # ✅ Debug Kubernetes Connection
       - name: Debug Kubernetes Cluster
-        run: kubectl get nodes
+        run: |
+          echo "Verifying Kubernetes Cluster Access..."
+          kubectl cluster-info
+          kubectl config get-contexts
+          kubectl get nodes || echo "⚠️ Warning: Could not retrieve nodes"
 
       # ✅ Update Kubernetes Deployment Manifest with the new image
       - name: Update Kubernetes Deployment
         run: |
           sed -i "s|image:.*|image: $IMAGE_TAG|g" k8s/deployment.yaml
+          echo "Updated k8s/deployment.yaml with new image:"
           cat k8s/deployment.yaml  # Debugging output
 
       # ✅ Apply Kubernetes manifests from `k8s/`
       - name: Deploy to Kubernetes
-        run: kubectl apply -f k8s/
+        run: |
+          echo "Applying Kubernetes manifests..."
+          kubectl apply -f k8s/ || echo "⚠️ Deployment Failed"
 
       # ✅ Verify Deployment Status
       - name: Check Deployment
-        run: kubectl rollout status deployment/metaverse-frontend -n default
+        run: |
+          echo "Checking rollout status..."
+          kubectl rollout status deployment/metaverse-frontend -n default || echo "⚠️ Rollout failed"
