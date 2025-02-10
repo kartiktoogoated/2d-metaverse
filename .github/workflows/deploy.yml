@@ -68,8 +68,8 @@ jobs:
       - name: Debug Kubernetes Cluster
         run: |
           echo "Verifying Kubernetes Cluster Access..."
-          kubectl cluster-info
-          kubectl config get-contexts
+          kubectl cluster-info || echo "⚠️ Warning: Cluster info not available"
+          kubectl config get-contexts || echo "⚠️ Warning: No contexts found"
           kubectl get nodes || echo "⚠️ Warning: Could not retrieve nodes"
 
       # ✅ Update Kubernetes Deployment Manifest with the new image
