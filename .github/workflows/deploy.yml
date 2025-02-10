@@ -13,6 +13,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # ✅ Debug Runner Architecture
+      - name: Debug Runner Architecture
+        run: |
+          echo "System Architecture:"
+          uname -m
+          echo "Docker Version:"
+          docker version
+
       # ✅ Log in to DockerHub
       - name: Log in to DockerHub
         uses: docker/login-action@v2
@@ -27,7 +35,7 @@ jobs:
 
       # ✅ Build the Docker image from `metaverse/`
       - name: Build Docker Image
-        run: docker build --platform=linux/amd64 -t $IMAGE_TAG -f metaverse/Dockerfile metaverse/
+        run: docker build -t $IMAGE_TAG -f metaverse/Dockerfile metaverse/
 
       # ✅ Push the Docker image to DockerHub
       - name: Push Docker Image
@@ -53,6 +61,10 @@ jobs:
           echo "${{ secrets.KUBECONFIG }}" | base64 --decode > kubeconfig
           export KUBECONFIG=kubeconfig
           kubectl config view
+
+      # ✅ Debug Kubernetes Connection
+      - name: Debug Kubernetes Cluster
+        run: kubectl get nodes
 
       # ✅ Update Kubernetes Deployment Manifest with the new image
       - name: Update Kubernetes Deployment

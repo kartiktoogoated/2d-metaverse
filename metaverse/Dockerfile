@@ -1,5 +1,6 @@
 # Use Node.js 18 (ARM64 support for Mac M1/M2)
-FROM --platform=linux/amd64 node:18-bullseye AS base
+FROM node:18-bullseye AS base
+
 # Set working directory
 WORKDIR /app
 
