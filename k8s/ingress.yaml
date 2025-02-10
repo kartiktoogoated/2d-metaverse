@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: metaverse-ingress
+spec:
+  rules:
+    - host: metaverse.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: metaverse-service
+                port:
+                  number: 80

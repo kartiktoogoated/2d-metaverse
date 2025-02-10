@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metaverse-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: metaverse-frontend
+  template:
+    metadata:
+      labels:
+        app: metaverse-frontend
+    spec:
+      containers:
+      - name: metaverse-frontend
+        image: kartiktoogoated/metaverse-frontend:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "512Mi"  # Minimum amount of memory the container will get
+            cpu: "500m"      # Minimum amount of CPU the container will get
+          limits:
+            memory: "1Gi"    # Maximum amount of memory the container can use
+            cpu: "1000m"     # Maximum amount of CPU the container can use
