@@ -10,22 +10,59 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
+    },
+    "./components/Button": {
+      "import": "./dist/components/Button.js",
+      "require": "./dist/components/Button.cjs",
+      "types": "./dist/components/Button.d.ts"
+    },
+    "./components/Card": {
+      "import": "./dist/components/Card.js",
+      "require": "./dist/components/Card.cjs",
+      "types": "./dist/components/Card.d.ts"
+    },
+    "./components/Input": {
+      "import": "./dist/components/Input.js",
+      "require": "./dist/components/Input.cjs",
+      "types": "./dist/components/Input.d.ts"
+    },
+    "./components/Label": {
+      "import": "./dist/components/Label.js",
+      "require": "./dist/components/Label.cjs",
+      "types": "./dist/components/Label.d.ts"
+    },
+    "./components/Alert": {
+      "import": "./dist/components/Alert.js",
+      "require": "./dist/components/Alert.cjs",
+      "types": "./dist/components/Alert.d.ts"
+    },
+    "./utils": {
+      "import": "./dist/utils/index.js",
+      "require": "./dist/utils/index.cjs",
+      "types": "./dist/utils/index.d.ts"
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "clean": "rm -rf dist",
     "build": "rm -rf dist && tsc",
     "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.0.6",
+    "lucide-react": "^0.475.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "lucide-react": "^0.475.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.13.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.2",
     "typescript": "5.7.3"
   }
 }

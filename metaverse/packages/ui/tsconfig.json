@@ -9,14 +9,18 @@
       "@repo/ui": ["./src"],
       "@repo/ui/*": ["./src/*"]
     },
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node"],  // ✅ Added for Tailwind & Node.js support
+    "resolveJsonModule": true, // ✅ Allows importing JSON files
+    "allowJs": true, // ✅ Allows JS files if needed
+    "forceConsistentCasingInFileNames": true // ✅ Prevents casing issues in imports
   },
-  "include": ["src"],
+  "include": ["src", "tailwind.config.ts"],  // ✅ Ensures Tailwind config is included
   "exclude": ["node_modules", "dist"]
 }
