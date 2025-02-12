@@ -15,10 +15,14 @@
     "@repo/db": "workspace:*",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
+    "axios": "^1.7.9",
     "esbuild": "^0.24.0",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "typescript": "^5.6.3",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17"
   }
 }
