@@ -1,13 +1,17 @@
-// import '@repo/config/global.css'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// import Signin from "./Signin";
+import AuthForm from "./AuthForm";
+import Game from "./Game";
 
 function App() {
-
   return (
-    <>
-      <div className='w-full h-screen bg-red-500'></div>
-      hi
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<AuthForm />} />
+        <Route path="/game" element={<Game />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
