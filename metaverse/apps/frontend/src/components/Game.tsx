@@ -224,7 +224,7 @@ const Arena = () => {
         <p className="text-sm text-gray-600"><strong>Space ID:</strong> {params.spaceId}</p>
         <p className="text-sm text-gray-600"><strong>Connected Users:</strong> {users.size + (currentUser ? 1 : 0)}</p>
       </div>
-      <div className="border-2 border-gray-400 rounded-lg overflow-hidden shadow-lg">
+      <div>
         <canvas
           ref={canvasRef}
           width={1000}
