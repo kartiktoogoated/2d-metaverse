@@ -6,21 +6,22 @@
     "emitDeclarationOnly": false,
     "baseUrl": ".",
     "paths": {
-      "@repo/ui": ["./src"],
+      "@repo/ui": ["./src/index.ts"],
       "@repo/ui/*": ["./src/*"]
     },
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2020",
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "types": ["node"],  // ✅ Added for Tailwind & Node.js support
-    "resolveJsonModule": true, // ✅ Allows importing JSON files
-    "allowJs": true, // ✅ Allows JS files if needed
-    "forceConsistentCasingInFileNames": true // ✅ Prevents casing issues in imports
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "tailwind.config.ts"],  // ✅ Ensures Tailwind config is included
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
