@@ -9,7 +9,8 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "start": "turbo run start --filter=apps/frontend"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

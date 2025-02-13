@@ -3,12 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
+"scripts": {
+  "dev": "vite",
+  "build": "tsc -b && vite build",
+  "lint": "eslint .",
+  "preview": "vite preview --port 3000 --host",
+  "start": "vite preview --port 3000 --host"
+}
+
+
+,
   "dependencies": {
     "@repo/tailwind-config": "workspace:*",
     "@repo/ui": "workspace:*",

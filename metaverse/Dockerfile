@@ -7,7 +7,6 @@ WORKDIR /app
 # Install pnpm globally
 RUN corepack enable && corepack prepare pnpm@9.12.2 --activate
 
-
 # ✅ Set pnpm store location inside the container (avoids conflicts with macOS)
 RUN pnpm config set store-dir /app/.pnpm-store
 
@@ -37,9 +36,8 @@ RUN pnpm run build --filter=frontend
 # ✅ Serve the built frontend using Vite preview
 WORKDIR /app/apps/frontend
 
-# Expose the port used by the frontend app
+# Expose the correct port
 EXPOSE 3000
 
-# ✅ Start the frontend app
-CMD ["pnpm", "run", "start"]
-
+# ✅ Start the frontend app on port 3000
+CMD ["pnpm", "run", "preview", "--", "--port", "3000", "--host"]
