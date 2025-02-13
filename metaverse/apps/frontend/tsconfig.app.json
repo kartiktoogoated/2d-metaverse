@@ -15,12 +15,18 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Paths for Monorepo Dependencies */
+    "baseUrl": ".",
+    "paths": {
+      "@repo/ui": ["../../packages/ui/src/index.ts"],  // ✅ Ensure this points to `packages/ui/src`
+      "@repo/ui/*": ["../../packages/ui/src/*"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    // "noUncheckedSideEffectImports": true
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
 }
