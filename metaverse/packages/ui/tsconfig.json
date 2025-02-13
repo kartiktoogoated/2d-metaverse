@@ -22,6 +22,6 @@
     "allowJs": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"],
+  "include": ["src", "src/components/Navbar.tsx", "../../apps/frontend/src/AuthForm.tsx"],
   "exclude": ["node_modules", "dist"]
 }
