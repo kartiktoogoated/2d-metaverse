@@ -2,3 +2,4 @@ packages:
   - "apps/*"
   - "packages/*"
   - "packages/tailwind-config"
+  - "packages/ui"
