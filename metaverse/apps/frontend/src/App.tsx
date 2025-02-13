@@ -1,9 +1,17 @@
-import { AuthForm, Features, Footer, TechSpecs } from "@repo/ui";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import AuthForm from "./AuthForm"; 
+import Features from "@repo/ui/components/Features.js";
+import Footer from "@repo/ui/components/Footer.js";
+import TechSpecs from "@repo/ui/components/TechSpecs.js";
+import Navbar from "@repo/ui/components/Navbar.js"; // ✅ Ensure Navbar is included
 
-function App() {
+function HomePage() {
+  const navigate = useNavigate(); // ✅ Use React Router navigation
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
+      <Navbar /> {/* ✅ Ensure Navbar is placed at the top */}
+
       {/* Radial Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-[500px] h-[500px] radial-blur bg-cyan-600/20 rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse-glow" />
@@ -14,8 +22,8 @@ function App() {
 
       {/* Grid Pattern Background */}
       <div className="fixed inset-0 bg-grid-pattern opacity-5" />
+
       {/* Main Sections */}
-      <AuthForm />
       <div className="relative min-h-screen pt-16">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
@@ -27,11 +35,13 @@ function App() {
               &gt; CONNECTING PLAYERS_<br />
               &gt; LOADING EXPERIENCE_
             </p>
-            <button 
-              onClick={() => window.location.href = '/world'} 
+
+            {/* ✅ Navigate to /auth when clicked */}
+            <button
+              onClick={() => navigate("/auth")}
               className="px-8 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-teal-600 text-white text-2xl pixel-corners hover:from-cyan-500 hover:via-blue-500 hover:to-teal-500 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 relative group"
             >
-              <span className="relative z-10">START_GAME.exe</span>
+              <span className="relative z-10">ACCESS_PORTAL</span>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded"></div>
             </button>
           </div>
@@ -39,12 +49,12 @@ function App() {
           {/* Avatar Preview */}
           <div className="mt-32 grid grid-cols-3 md:grid-cols-6 gap-8 max-w-4xl mx-auto">
             {[...Array(6)].map((_, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="group cursor-pointer transform transition-all duration-300 hover:scale-110"
               >
-                <div 
-                  className={`animate-float`} 
+                <div
+                  className={`animate-float`}
                   style={{ animationDelay: `${i * 0.5}s` }}
                 >
                   <img
@@ -61,9 +71,19 @@ function App() {
 
       <Features />
       <TechSpecs />
-      {/* Footer */}
       <Footer />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/auth" element={<AuthForm />} /> {/* ✅ Auth Form Page */}
+      </Routes>
+    </Router>
   );
 }
 
