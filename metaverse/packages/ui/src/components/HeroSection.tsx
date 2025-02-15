@@ -1,5 +1,5 @@
 export default function Hero(){
-    <div className="relative min-h-screen pt-16">
+      <div className="relative min-h-screen pt-16 section-transition">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-6xl md:text-9xl text-glitch text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-teal-400 mb-6 font-bold hover:scale-105 transition-transform duration-500">
