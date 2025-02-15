@@ -6,4 +6,4 @@ app.use(express.json())
 
 app.use("/api/v1", router)
 
-app.listen(process.env.PORT || 3000)
+app.listen(process.env.PORT || 3002)

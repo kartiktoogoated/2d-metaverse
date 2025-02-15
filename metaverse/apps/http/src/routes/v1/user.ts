@@ -45,9 +45,10 @@ userRouter.get("/metadata/bulk", async (req, res) => {
     })
 
     res.json({
-        avatars: metadata.map((m: { id: any; avatar: { imageUrl: any; }; }) => ({
+        avatars: metadata.map((m: { id: string; avatar: { imageUrl: string | null } | null }) => ({
             userId: m.id,
-            avatarId: m.avatar?.imageUrl
+            avatarId: m.avatar?.imageUrl ?? null  // Ensure avatarId is null if imageUrl is not present
         }))
-    })
+    });
+    
 })
