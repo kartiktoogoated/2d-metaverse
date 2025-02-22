@@ -23,7 +23,7 @@ function VideoCard() {
         setLoading(true);
 
         const endpoint = isSignIn ? "/api/v1/signin" : "/api/v1/signup"; // ✅ Choose API route based on state
-        const apiUrl = `http://localhost:3000${endpoint}`;
+        const apiUrl = `http://localhost:3002${endpoint}`;
 
         if (!isSignIn && formData.password !== formData.confirmPassword) {
             setError("Passwords do not match!");
@@ -44,7 +44,7 @@ function VideoCard() {
             if (isSignIn) {
                 localStorage.setItem("token", data.token); // ✅ Store JWT token
                 alert("Login successful!");
-                navigate("/"); // ✅ Redirect after login
+                navigate("/GameDashboard"); // ✅ Redirect after login
             } else {
                 alert("Signup successful! Please log in.");
                 setIsSignIn(true);
