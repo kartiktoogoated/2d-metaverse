@@ -3,6 +3,6 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" },
-    { "path": "../../packages/ui" }  // ✅ Add reference to `@repo/ui`
+    { "path": "../../packages/ui" }  // ✅ Ensure UI package is referenced correctly
   ]
 }

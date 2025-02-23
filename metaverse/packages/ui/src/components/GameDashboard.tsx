@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import Game from "./Game"; 
+
+// import {  useState } from "react";
+// import { useSearchParams } from "react-router-dom";
+// import Game from "./Game"; 
 
 const GameDashboard: React.FC = () => {
-  const [selectedWorld, setSelectedWorld] = useState<string | null>(null);
+  // const [setSelectedWorld] = useState<string | null>(null);
 
 
 
@@ -20,7 +20,6 @@ const GameDashboard: React.FC = () => {
           <div 
             key={world.id} 
             className="cursor-pointer bg-gray-800 p-4 rounded-lg hover:bg-gray-700"
-            onClick={() => setSelectedWorld(world.id)}
           >
             <h3 className="text-lg text-cyan-300">{world.name}</h3>
           </div>

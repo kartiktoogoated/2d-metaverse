@@ -20,8 +20,10 @@
     "types": ["node"],
     "resolveJsonModule": true,
     "allowJs": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": ["src", "src/components/Navbar.tsx", "../../apps/frontend/src/AuthForm.tsx"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }

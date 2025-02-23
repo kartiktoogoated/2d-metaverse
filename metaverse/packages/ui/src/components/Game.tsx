@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+/* eslint-disable no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import  { useEffect, useRef, useState } from 'react';
 
 const Arena = () => {
   const canvasRef = useRef<any>(null);

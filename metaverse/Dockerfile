@@ -14,7 +14,7 @@ RUN pnpm config set store-dir /app/.pnpm-store
 RUN rm -rf node_modules /app/.pnpm-store /root/.pnpm-store
 
 # Copy package manager files
-COPY package.json turbo.json pnpm-lock.yaml ./
+COPY package.json turbo.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # ✅ Install dependencies in the correct store
 RUN pnpm install --frozen-lockfile
@@ -22,16 +22,15 @@ RUN pnpm install --frozen-lockfile
 # Copy the full project
 COPY . .
 
-# Ensure workspaces are recognized
-RUN pnpm install
+# ✅ Ensure workspace dependencies are installed properly
+RUN rm -rf node_modules apps/frontend/node_modules packages/ui/node_modules
+RUN pnpm install --frozen-lockfile
 
-# ✅ Remove mismatched dependencies and prune the store
-RUN rm -rf node_modules
-RUN pnpm store prune
-RUN pnpm install
+# ✅ Build only the UI package before frontend (Fixes missing dependencies)
+RUN pnpm turbo run build --filter=@repo/ui
 
 # ✅ Build only the frontend workspace
-RUN pnpm run build --filter=frontend
+RUN pnpm turbo run build --filter=frontend
 
 # ✅ Serve the built frontend using Vite preview
 WORKDIR /app/apps/frontend
