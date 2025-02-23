@@ -33,9 +33,8 @@ export class User {
     initHandlers() {
         this.ws.on("message", async (data) => {
             try {
-                console.log("Received data:", data);
                 const parsedData = JSON.parse(data.toString());
-                console.log("Parsed data:", parsedData);
+                console.log("Received WebSocket message:", parsedData);
 
                 switch (parsedData.type) {
                     case "join":
@@ -46,8 +45,14 @@ export class User {
                         await this.handleMove(parsedData);
                         break;
 
+                    case "webrtc-offer":
+                    case "webrtc-answer":
+                    case "webrtc-ice-candidate":
+                        await this.handleWebRTC(parsedData);
+                        break;
+
                     default:
-                        console.error("Unknown message type:", parsedData.type);
+                        console.warn("Unknown message type:", parsedData.type);
                 }
             } catch (error) {
                 console.error("Error handling message:", error);
@@ -60,23 +65,27 @@ export class User {
     }
 
     async handleJoin(parsedData: any) {
-        const spaceId = parsedData.payload.spaceId;
-        const token = parsedData.payload.token;
+        const { spaceId, token } = parsedData.payload;
+
+        if (!token || !spaceId) {
+            console.error("❌ Missing token or spaceId in WebSocket connection.");
+            this.ws.close();
+            return;
+        }
 
         try {
-            const userId = (jwt.verify(token, JWT_PASSWORD) as JwtPayload).userId;
-            if (!userId) throw new Error("Invalid userId in token");
-
-            this.userId = userId;
+            const decoded = jwt.verify(token, JWT_PASSWORD) as JwtPayload;
+            this.userId = decoded.userId;
+            if (!this.userId) throw new Error("Invalid userId in token");
         } catch (error) {
-            console.error("Token verification failed:", error);
+            console.error("❌ Token verification failed:", error);
             this.ws.close();
             return;
         }
 
         const space = await client.space.findFirst({ where: { id: spaceId } });
         if (!space) {
-            console.error(`Space not found: ${spaceId}`);
+            console.error(`❌ Space not found: ${spaceId}`);
             this.ws.close();
             return;
         }
@@ -91,6 +100,7 @@ export class User {
             type: "space-joined",
             payload: {
                 spawn: { x: this.x, y: this.y },
+                userId: this.userId,
                 users: RoomManager.getInstance().rooms.get(spaceId)
                     ?.filter((u) => u.id !== this.id)
                     ?.map((u) => ({
@@ -101,25 +111,36 @@ export class User {
             },
         });
 
-        RoomManager.getInstance().broadcast({
-            type: "user-joined",
-            payload: {
-                userId: this.userId,
-                x: this.x,
-                y: this.y,
-            },
-        }, this, this.spaceId!);
+        setTimeout(() => {
+            RoomManager.getInstance().broadcast({
+                type: "user-joined",
+                payload: {
+                    userId: this.userId,
+                    x: this.x,
+                    y: this.y,
+                },
+            }, this, this.spaceId!);
 
-        console.log(`User ${this.userId} joined space ${spaceId}`);
+            console.log(`✅ User ${this.userId} joined space ${spaceId}`);
+        }, 100);
     }
 
     async handleMove(parsedData: any) {
-        const moveX = parsedData.payload.x;
-        const moveY = parsedData.payload.y;
+        if (!this.spaceId || !this.userId) {
+            console.error("❌ Move request received before user was fully initialized.");
+            return;
+        }
+
+        const { x: moveX, y: moveY } = parsedData.payload;
+
+        if (typeof moveX !== "number" || typeof moveY !== "number") {
+            console.error("❌ Invalid move coordinates:", moveX, moveY);
+            return;
+        }
 
         const space = await client.space.findFirst({ where: { id: this.spaceId } });
         if (!space) {
-            console.error(`Space not found: ${this.spaceId}`);
+            console.error(`❌ Space not found: ${this.spaceId}`);
             this.ws.close();
             return;
         }
@@ -129,7 +150,7 @@ export class User {
 
         if ((xDisplacement === 1 && yDisplacement === 0) || (xDisplacement === 0 && yDisplacement === 1)) {
             if (moveX < 0 || moveY < 0 || moveX >= space.width || moveY >= space.height) {
-                console.warn("Movement out of bounds");
+                console.warn("⚠️ Movement out of bounds");
                 this.send({
                     type: "movement-rejected",
                     payload: { x: this.x, y: this.y },
@@ -143,15 +164,15 @@ export class User {
             RoomManager.getInstance().broadcast({
                 type: "movement",
                 payload: {
-                    userId: this.userId, // Ensure userId is included
+                    userId: this.userId,
                     x: this.x,
                     y: this.y,
                 },
             }, this, this.spaceId!);
 
-            console.log(`User ${this.userId} moved to (${this.x}, ${this.y})`);
+            console.log(`✅ User ${this.userId} moved to (${this.x}, ${this.y})`);
         } else {
-            console.log("Invalid move request:", { moveX, moveY });
+            console.log("❌ Invalid move request:", { moveX, moveY });
             this.send({
                 type: "movement-rejected",
                 payload: { x: this.x, y: this.y },
@@ -159,21 +180,52 @@ export class User {
         }
     }
 
-    destroy() {
-        RoomManager.getInstance().broadcast({
-            type: "user-left",
-            payload: { userId: this.userId },
-        }, this, this.spaceId!);
-        RoomManager.getInstance().removeUser(this, this.spaceId!);
+    async handleWebRTC(parsedData: any) {
+        const { type, from, to, offer, answer, candidate } = parsedData;
 
-        console.log(`User ${this.userId} left space ${this.spaceId}`);
+        if (!to || !this.spaceId || !this.userId) {
+            console.error("❌ WebRTC message missing required fields:", parsedData);
+            return;
+        }
+
+        const recipient = RoomManager.getInstance()
+            .rooms.get(this.spaceId)
+            ?.find((user) => user.userId === to);
+
+        if (!recipient) {
+            console.warn(`⚠️ WebRTC recipient ${to} not found in space ${this.spaceId}`);
+            return;
+        }
+
+        recipient.send({
+            type,
+            from,
+            to,
+            offer,
+            answer,
+            candidate,
+        });
+
+        console.log(`🔄 WebRTC ${type} forwarded from ${from} to ${to}`);
+    }
+
+    destroy() {
+        if (this.spaceId && this.userId) {
+            RoomManager.getInstance().broadcast({
+                type: "user-left",
+                payload: { userId: this.userId },
+            }, this, this.spaceId!);
+
+            RoomManager.getInstance().removeUser(this, this.spaceId!);
+            console.log(`❌ User ${this.userId} left space ${this.spaceId}`);
+        }
     }
 
     send(payload: OutgoingMessage) {
         try {
             this.ws.send(JSON.stringify(payload));
         } catch (error) {
-            console.error("Failed to send message:", error);
+            console.error("❌ Failed to send message:", error);
         }
     }
 }
