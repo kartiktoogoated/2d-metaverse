@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import Game from './Game'; // Import Game.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import Game from "./Game"; 
 
 const GameDashboard: React.FC = () => {
   const [selectedWorld, setSelectedWorld] = useState<string | null>(null);
 
-  if (selectedWorld) {
-    return <Game />; // Pass worldId as prop
-  }
+
 
   return (
     <div className="min-h-screen bg-black text-cyan-100">
