@@ -1,237 +1,197 @@
-/* eslint-disable no-case-declarations */
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 const Arena = () => {
   const canvasRef = useRef<any>(null);
-  const wsRef = useRef<any>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
   const [users, setUsers] = useState(new Map());
-  const [params, setParams] = useState({ token: '', spaceId: '' });
+  const [params, setParams] = useState({ token: "", spaceId: "" });
+
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token') || '';
-    const spaceId = urlParams.get('spaceId') || '';
+    const token = urlParams.get("token") || "";
+    const spaceId = urlParams.get("spaceId") || "";
+
+    if (!token || !spaceId) {
+      console.error("Missing token or spaceId in URL parameters.");
+      return;
+    }
+
     setParams({ token, spaceId });
 
-    wsRef.current = new WebSocket('ws://localhost:3001');
+    wsRef.current = new WebSocket(`ws://localhost:3001?token=${token}&spaceId=${spaceId}`);
 
     wsRef.current.onopen = () => {
-      console.log('WebSocket connection established');
-      wsRef.current.send(
+      console.log("WebSocket connection established");
+      wsRef.current?.send(
         JSON.stringify({
-          type: 'join',
-          payload: {
-            spaceId,
-            token,
-          },
+          type: "join",
+          payload: { spaceId, token },
         })
       );
     };
 
-    wsRef.current.onmessage = (event: any) => {
+    wsRef.current.onmessage = async (event) => {
       const message = JSON.parse(event.data);
-      console.log('Received WebSocket message:', message);
-      handleWebSocketMessage(message);
+      console.log("Received WebSocket message:", message);
+      await handleWebSocketMessage(message);
     };
 
     wsRef.current.onclose = () => {
-      console.log('WebSocket connection closed');
+      console.log("WebSocket connection closed");
     };
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      wsRef.current?.close();
     };
   }, []);
 
-  const handleWebSocketMessage = (message: any) => {
+  const handleWebSocketMessage = async (message: any) => {
     switch (message.type) {
-      case 'space-joined':
-        console.log('Joined space:', message.payload);
+      case "space-joined":
+        console.log("Joined space:", message.payload);
         setCurrentUser({
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
           userId: message.payload.userId,
         });
 
-        const userMap = new Map();
-        message.payload.users.forEach((user: any) => {
-          userMap.set(user.userId, user);
-        });
-        setUsers(userMap);
-        break;
-
-      case 'user-joined':
-        console.log('User joined:', message.payload);
         setUsers((prev) => {
-          const newUsers = new Map(prev);
-          newUsers.set(message.payload.userId, {
-            x: message.payload.x,
-            y: message.payload.y,
-            userId: message.payload.userId,
+          const userMap = new Map(prev);
+          message.payload.users.forEach((user: any) => {
+            userMap.set(user.userId, user);
           });
-          return newUsers;
+          return userMap;
         });
         break;
 
-      case 'movement':
-        console.log('Movement received:', message.payload);
-        setUsers((prev) => {
-          const newUsers = new Map(prev);
-          const user = newUsers.get(message.payload.userId);
-          if (user) {
-            user.x = message.payload.x;
-            user.y = message.payload.y;
-            newUsers.set(message.payload.userId, user);
-          }
-          return newUsers;
-        });
+      case "webrtc-offer":
+        console.log("Received WebRTC Offer");
+        await handleOffer(message);
+        break;
 
-        if (message.payload.userId === currentUser.userId) {
-          setCurrentUser((prev: any) => ({
-            ...prev,
-            x: message.payload.x,
-            y: message.payload.y,
-          }));
+      case "webrtc-answer":
+        console.log("Received WebRTC Answer");
+        await handleAnswer(message);
+        break;
+
+      case "webrtc-ice-candidate":
+        console.log("Received ICE Candidate");
+        await handleIceCandidate(message);
+        break;
+
+      default:
+        console.error("Unknown message type:", message.type);
+    }
+  };
+
+  const ensurePeerConnection = async () => {
+    if (!peerConnectionRef.current) {
+      peerConnectionRef.current = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      });
+
+      peerConnectionRef.current.onicecandidate = (event: any) => {
+        if (event.candidate && wsRef.current) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "webrtc-ice-candidate",
+              from: currentUser.userId,
+              to: Array.from(users.keys())[0], // Send to first available user
+              candidate: event.candidate,
+            })
+          );
         }
-        break;
+      };
 
-      case 'movement-rejected':
-        console.warn('Movement rejected. Resetting position:', message.payload);
-        setCurrentUser((prev: any) => ({
-          ...prev,
-          x: message.payload.x,
-          y: message.payload.y,
-        }));
-        break;
+      peerConnectionRef.current.ontrack = (event: any) => {
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+        }
+      };
 
-      case 'user-left':
-        console.log('User left:', message.payload);
-        setUsers((prev) => {
-          const newUsers = new Map(prev);
-          newUsers.delete(message.payload.userId);
-          return newUsers;
-        });
-        break;
-
-      default:
-        console.error('Unknown message type:', message.type);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        stream.getTracks().forEach((track) => peerConnectionRef.current?.addTrack(track, stream));
+      } catch (error) {
+        console.error("Error accessing media devices:", error);
+      }
     }
   };
 
-  const handleMove = (newX: any, newY: any) => {
-    if (!currentUser) return;
+  const startCall = async () => {
+    await ensurePeerConnection();
 
-    setCurrentUser((prev: any) => ({
-      ...prev,
-      x: newX,
-      y: newY,
-    }));
+    if (peerConnectionRef.current) {
+      const offer = await peerConnectionRef.current.createOffer();
+      await peerConnectionRef.current.setLocalDescription(offer);
 
-    wsRef.current.send(
-      JSON.stringify({
-        type: 'move',
-        payload: {
-          x: newX,
-          y: newY,
-          userId: currentUser.userId,
-        },
-      })
-    );
+      wsRef.current?.send(
+        JSON.stringify({
+          type: "webrtc-offer",
+          from: currentUser.userId,
+          to: Array.from(users.keys())[0], // Send to first available user
+          offer,
+        })
+      );
+    }
   };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleOffer = async (message: any) => {
+    await ensurePeerConnection();
 
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (peerConnectionRef.current) {
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(message.offer));
+      const answer = await peerConnectionRef.current.createAnswer();
+      await peerConnectionRef.current.setLocalDescription(answer);
 
-    ctx.strokeStyle = '#eee';
-    for (let i = 0; i < canvas.width; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, canvas.height);
-      ctx.stroke();
+      wsRef.current?.send(
+        JSON.stringify({
+          type: "webrtc-answer",
+          from: currentUser.userId,
+          to: message.from,
+          answer,
+        })
+      );
     }
-    for (let i = 0; i < canvas.height; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(canvas.width, i);
-      ctx.stroke();
+  };
+
+  const handleAnswer = async (message: any) => {
+    if (peerConnectionRef.current) {
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(message.answer));
     }
+  };
 
-    users.forEach((user) => {
-      if (user.x === undefined || user.y === undefined) return;
-
-      ctx.beginPath();
-      ctx.fillStyle = '#4ECDC4';
-      ctx.arc(user.x * 50, user.y * 50, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#000';
-      ctx.font = '14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`User ${user.userId}`, user.x * 50, user.y * 50 + 40);
-    });
-
-    if (currentUser && currentUser.x !== undefined && currentUser.y !== undefined) {
-      ctx.beginPath();
-      ctx.fillStyle = '#FF6B6B';
-      ctx.arc(currentUser.x * 50, currentUser.y * 50, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#000';
-      ctx.font = '14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('You', currentUser.x * 50, currentUser.y * 50 + 40);
-    }
-  }, [currentUser, users]);
-
-  const handleKeyDown = (e: any) => {
-    if (!currentUser) return;
-
-    const { x, y } = currentUser;
-    switch (e.key) {
-      case 'ArrowUp':
-        handleMove(x, y - 1);
-        break;
-      case 'ArrowDown':
-        handleMove(x, y + 1);
-        break;
-      case 'ArrowLeft':
-        handleMove(x - 1, y);
-        break;
-      case 'ArrowRight':
-        handleMove(x + 1, y);
-        break;
-      default:
-        break;
+  const handleIceCandidate = async (message: any) => {
+    if (peerConnectionRef.current) {
+      await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(message.candidate));
     }
   };
 
   return (
-    <div
-      className="p-4 flex flex-col items-center justify-center min-h-screen bg-gray-100"
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-    >
+    <div className="p-4 flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-3xl font-bold text-gray-800 mb-4">Arena</h1>
-      <div className="bg-white shadow-md rounded-lg p-4 mb-4 w-full max-w-lg">
-        <p className="text-sm text-gray-600"><strong>Token:</strong> {params.token}</p>
-        <p className="text-sm text-gray-600"><strong>Space ID:</strong> {params.spaceId}</p>
-        <p className="text-sm text-gray-600"><strong>Connected Users:</strong> {users.size + (currentUser ? 1 : 0)}</p>
+      <canvas ref={canvasRef} width={1000} height={1000} className="bg-white outline-none" />
+      <div className="mt-4 flex gap-4">
+        <video ref={localVideoRef} autoPlay playsInline className="w-48 h-32 bg-black" />
+        <video ref={remoteVideoRef} autoPlay playsInline className="w-48 h-32 bg-black" />
       </div>
-      <div>
-        <canvas
-          ref={canvasRef}
-          width={1000}
-          height={1000}
-          className="bg-white outline-none"
-        />
-      </div>
+      <button
+        onClick={startCall}
+        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md"
+      >
+        Start Call
+      </button>
       <p className="mt-2 text-sm text-gray-500">Use arrow keys to move your avatar</p>
     </div>
   );
