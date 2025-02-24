@@ -15,9 +15,12 @@
     "@repo/ui": "workspace:*",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.5",
+    "socket.io-client": "^4.8.1",
+    "ws": "^8.18.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

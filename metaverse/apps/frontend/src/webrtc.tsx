@@ -1,177 +1,84 @@
-// import { useEffect, useState, useRef } from "react";
-// import { io, Socket } from "socket.io-client";
+// import React, { useEffect, useRef, useState } from "react";
+// import io from "socket.io-client";
 
-// const socket: Socket = io("ws://localhost:4000"); // WebSocket signaling server
+// const socket = io("ws://localhost:3001");
 
-// interface WebRTCProps {
-//   spaceId: string;
-//   userId: string;
-// }
-
-// const WebRTCComponent: React.FC<WebRTCProps> = ({ spaceId, userId }) => {
-//   const [peers, setPeers] = useState<{ [key: string]: MediaStream }>({});
-//   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+// const VideoCall = ({ userId, spaceId }: { userId: string; spaceId: string }) => {
+//   const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null);
 //   const localVideoRef = useRef<HTMLVideoElement | null>(null);
-//   const localStream = useRef<MediaStream | null>(null);
-//   const peerConnections = useRef<{ [key: string]: RTCPeerConnection }>({});
+//   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
 
 //   useEffect(() => {
-//     const initWebRTC = async () => {
-//       try {
-//         localStream.current = await navigator.mediaDevices.getUserMedia({
-//           video: true,
-//           audio: true,
-//         });
+//     socket.on("webrtc-initiate", ({ targetId }) => {
+//       startCall(targetId);
+//     });
 
-//         if (localVideoRef.current) {
-//           localVideoRef.current.srcObject = localStream.current;
-//         }
+//     socket.on("webrtc-offer", async ({ targetId, offer }) => {
+//       if (!peerConnection) return;
 
-//         socket.emit("join-room", { spaceId, userId });
+//       await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+//       const answer = await peerConnection.createAnswer();
+//       await peerConnection.setLocalDescription(answer);
 
-//         socket.on("user-joined", async ({ userId: remoteUserId }) => {
-//           createPeerConnection(remoteUserId);
-//         });
+//       socket.emit("webrtc-answer", { targetId, answer });
+//     });
 
-//         socket.on("signal", async ({ sender, signal }) => {
-//           if (signal.type === "offer") {
-//             await handleOffer(sender, signal);
-//           } else if (signal.type === "answer") {
-//             await handleAnswer(sender, signal);
-//           } else if (signal.candidate) {
-//             handleICECandidate(sender, signal);
-//           }
-//         });
-
-//         socket.on("user-left", ({ userId: remoteUserId }) => {
-//           if (peerConnections.current[remoteUserId]) {
-//             peerConnections.current[remoteUserId].close();
-//             delete peerConnections.current[remoteUserId];
-//           }
-//           setPeers((prev) => {
-//             const newPeers = { ...prev };
-//             delete newPeers[remoteUserId];
-//             return newPeers;
-//           });
-//         });
-//       } catch (error) {
-//         console.error("Error initializing WebRTC:", error);
+//     socket.on("webrtc-answer", async ({ answer }) => {
+//       if (peerConnection) {
+//         await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
 //       }
-//     };
+//     });
 
-//     initWebRTC();
+//     socket.on("webrtc-ice-candidate", async ({ candidate }) => {
+//       if (peerConnection) {
+//         await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+//       }
+//     });
 
 //     return () => {
-//       socket.emit("leave-room", { spaceId, userId });
-//       Object.values(peerConnections.current).forEach((pc) => pc.close());
+//       socket.off("webrtc-initiate");
+//       socket.off("webrtc-offer");
+//       socket.off("webrtc-answer");
+//       socket.off("webrtc-ice-candidate");
 //     };
-//   }, [spaceId, userId]);
+//   }, [peerConnection]);
 
-//   const createPeerConnection = (remoteUserId: string) => {
-//     const peer = new RTCPeerConnection({
-//       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-//     });
+//   const startCall = async (targetId: string) => {
+//     const peer = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
 
-//     peerConnections.current[remoteUserId] = peer;
+//     setPeerConnection(peer);
 
-//     localStream.current?.getTracks().forEach((track) => {
-//       peer.addTrack(track, localStream.current!);
-//     });
+//     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+//     stream.getTracks().forEach((track) => peer.addTrack(track, stream));
 
-//     peer.onicecandidate = (event) => {
-//       if (event.candidate) {
-//         socket.emit("signal", {
-//           receiver: remoteUserId,
-//           sender: userId,
-//           signal: event.candidate,
-//         });
+//     if (localVideoRef.current) {
+//       localVideoRef.current.srcObject = stream;
+//     }
+
+//     peer.ontrack = (event) => {
+//       if (remoteVideoRef.current) {
+//         remoteVideoRef.current.srcObject = event.streams[0];
 //       }
 //     };
 
-//     peer.ontrack = (event) => {
-//       setPeers((prev) => ({
-//         ...prev,
-//         [remoteUserId]: event.streams[0],
-//       }));
-//     };
-
-//     peer.createOffer().then((offer) => {
-//       peer.setLocalDescription(offer);
-//       socket.emit("signal", {
-//         receiver: remoteUserId,
-//         sender: userId,
-//         signal: offer,
-//       });
-//     });
-//   };
-
-//   const handleOffer = async (sender: string, offer: RTCSessionDescriptionInit) => {
-//     const peer = new RTCPeerConnection({
-//       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-//     });
-
-//     peerConnections.current[sender] = peer;
-
-//     localStream.current?.getTracks().forEach((track) => {
-//       peer.addTrack(track, localStream.current!);
-//     });
-
 //     peer.onicecandidate = (event) => {
 //       if (event.candidate) {
-//         socket.emit("signal", {
-//           receiver: sender,
-//           sender: userId,
-//           signal: event.candidate,
-//         });
+//         socket.emit("webrtc-ice-candidate", { targetId, candidate: event.candidate });
 //       }
 //     };
 
-//     peer.ontrack = (event) => {
-//       setPeers((prev) => ({
-//         ...prev,
-//         [sender]: event.streams[0],
-//       }));
-//     };
-
-//     await peer.setRemoteDescription(new RTCSessionDescription(offer));
-//     const answer = await peer.createAnswer();
-//     await peer.setLocalDescription(answer);
-
-//     socket.emit("signal", {
-//       receiver: sender,
-//       sender: userId,
-//       signal: answer,
-//     });
-//   };
-
-//   const handleAnswer = async (sender: string, answer: RTCSessionDescriptionInit) => {
-//     const peer = peerConnections.current[sender];
-//     if (peer) {
-//       await peer.setRemoteDescription(new RTCSessionDescription(answer));
-//     }
-//   };
-
-//   const handleICECandidate = (sender: string, candidate: RTCIceCandidateInit) => {
-//     const peer = peerConnections.current[sender];
-//     if (peer) {
-//       peer.addIceCandidate(new RTCIceCandidate(candidate));
-//     }
+//     const offer = await peer.createOffer();
+//     await peer.setLocalDescription(offer);
+//     socket.emit("webrtc-offer", { targetId, offer });
 //   };
 
 //   return (
 //     <div>
-//       <h2>Video Chat in Space {spaceId}</h2>
-//       <video ref={localVideoRef} autoPlay muted />
-//       {Object.entries(peers).map(([id, stream]) => (
-//         <video
-//           key={id}
-//           ref={(ref) => (videoRefs.current[id] = ref)}
-//           srcObject={stream}
-//           autoPlay
-//         />
-//       ))}
+//       <h2>Video Call</h2>
+//       <video ref={localVideoRef} autoPlay playsInline muted style={{ width: "300px", border: "2px solid black" }} />
+//       <video ref={remoteVideoRef} autoPlay playsInline style={{ width: "300px", border: "2px solid red" }} />
 //     </div>
 //   );
 // };
 
-// export default WebRTCComponent;
+// export default VideoCall;

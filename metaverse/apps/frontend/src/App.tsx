@@ -4,7 +4,6 @@ import Features from "@repo/ui/components/Features.js";
 import Footer from "@repo/ui/components/Footer.js";
 import TechSpecs from "@repo/ui/components/TechSpecs.js";
 import Navbar from "@repo/ui/components/Navbar.js"; //
-import GameDashboard from "@repo/ui/components/GameDashboard";
 
 function HomePage() {
   const navigate = useNavigate();
@@ -83,7 +82,6 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthForm />} /> {/* ✅ Auth Form Page */}
-        <Route path="/GameDashboard" element={<GameDashboard />} />
       </Routes>
     </Router>
   );
