@@ -3,14 +3,14 @@ import AuthForm from "./AuthForm";
 import Features from "@repo/ui/components/Features.js";
 import Footer from "@repo/ui/components/Footer.js";
 import TechSpecs from "@repo/ui/components/TechSpecs.js";
-import Navbar from "@repo/ui/components/Navbar.js"; //
+import Navbar from "@repo/ui/components/Navbar.js"; // ✅ Ensure Navbar is included
 
 function HomePage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // ✅ Use React Router navigation
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
-      <Navbar /> 
+      <Navbar /> {/* ✅ Ensure Navbar is placed at the top */}
 
       {/* Radial Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -36,7 +36,7 @@ function HomePage() {
               &gt; LOADING EXPERIENCE_
             </p>
 
-            {/*  Navigate to /GameDashboard when clicked */}
+            {/* ✅ Navigate to /auth when clicked */}
             <button
               onClick={() => navigate("/auth")}
               className="px-8 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-teal-600 text-white text-2xl pixel-corners hover:from-cyan-500 hover:via-blue-500 hover:to-teal-500 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 relative group"
