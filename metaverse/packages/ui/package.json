@@ -19,6 +19,8 @@
     "build": "rm -rf dist && tsc"
   },
   "dependencies": {
+    "@react-three/drei": "^10.0.2",
+    "@react-three/fiber": "^9.0.4",
     "@tailwindcss/vite": "^4.0.6",
     "axios": "^1.7.9",
     "lucide-react": "^0.475.0",
