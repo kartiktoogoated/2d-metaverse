@@ -1,6 +1,8 @@
 import { Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthForm() {
+  const navigate = useNavigate();
 
   return (
     <nav className="fixed top-0 w-full z-40 bg-black/50 backdrop-blur-sm border-b border-cyan-900/30">
@@ -12,13 +14,23 @@ export default function AuthForm() {
           </span>
         </div>
 
-        {/* ✅ Redirect to /auth when clicked */}
-        {/* <button
-          onClick={() => navigate("/auth")}
-          className="px-6 py-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-teal-600 text-white rounded-full hover:from-cyan-500 hover:via-blue-500 hover:to-teal-500 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 font-medium tracking-wide"
-        >
-          ACCESS_PORTAL
-        </button> */}
+        <div className="flex space-x-4">
+          {/* ✅ Redirect to /game when clicked */}
+          <button
+            onClick={() => navigate("/game")}
+            className="px-6 py-2 bg-gradient-to-r from-green-600 via-teal-600 to-blue-600 text-white rounded-full hover:from-green-500 hover:via-teal-500 hover:to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 font-medium tracking-wide"
+          >
+            GAME
+          </button>
+
+          {/* ✅ Redirect to /knowmore when clicked */}
+          <button
+            onClick={() => navigate("/knowmore")}
+            className="px-6 py-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 text-white rounded-full hover:from-purple-500 hover:via-indigo-500 hover:to-cyan-500 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25 font-medium tracking-wide"
+          >
+            KNOW MORE
+          </button>
+        </div>
       </div>
     </nav>
   );
