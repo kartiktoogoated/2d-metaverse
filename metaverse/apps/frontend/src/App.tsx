@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import AuthForm from "./AuthForm"; 
 import Features from "@repo/ui/components/Features.js";
 import Footer from "@repo/ui/components/Footer.js";
@@ -7,8 +7,6 @@ import Navbar from "@repo/ui/components/Navbar.js"; // ✅ Ensure Navbar is incl
 import GameDashboard from "@repo/ui/components/GameDashboard"
 import KnowMore from "@repo/ui/components/KnowMore"
 import Docs from "@repo/ui/components/Docs"
-// import { HashRouter as Router, Routes, Route } from "react-router-dom";
-
 
 function HomePage() {
   const navigate = useNavigate(); // ✅ Use React Router navigation
