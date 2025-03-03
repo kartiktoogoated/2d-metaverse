@@ -84,12 +84,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* <Route path="/" element={<HomePage/>} /> ✅ Landing Page */}
+        <Route path="/" element={<HomePage/>} /> ✅ Landing Page
         <Route path="/auth" element={<AuthForm />} /> {/* ✅ Auth Form Page */}
         <Route path="/game" element={<GameDashboard />} /> {/* ✅ Game Dashboard Page */}
         <Route path="/knowmore" element={<KnowMore />} /> {/* ✅ KnowMore Page */}
         <Route path="/docs" element={<Docs />} /> {/* ✅ Docs Page */}
-        <Route path="/" element={<WebRTC />} /> {/* ✅ Landing Page */}
+        <Route path="/web" element={<WebRTC />} /> {/* ✅ Landing Page */}
       </Routes>
     </Router>
   );
