@@ -75,7 +75,7 @@ const GameDashboard: React.FC = () => {
         return;
       }
 
-      const response = await fetch("http://localhost:3002/api/v1/space/all", {
+      const response = await fetch("http://18.215.159.145:3002/api/v1/space/all", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -103,7 +103,7 @@ const GameDashboard: React.FC = () => {
         return;
       }
 
-      const response = await fetch("http://localhost:3002/api/v1/space", {
+      const response = await fetch("http://18.215.159.145:3002/api/v1/space", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,7 +147,7 @@ const GameDashboard: React.FC = () => {
         return;
       }
   
-      const response = await fetch(`http://localhost:3002/api/v1/space/${id}`, {
+      const response = await fetch(`http://18.215.159.145:3002/api/v1/space/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

@@ -19,7 +19,7 @@ const Arena = () => {
     }
 
     // Initialize WebSocket connection
-    wsRef.current = new WebSocket('ws://localhost:3001'); // ✅ Replace with your WS_URL
+    wsRef.current = new WebSocket('ws://18.215.159.145:3001'); // ✅ Replace with your WS_URL
 
     wsRef.current.onopen = () => {
       // Join the space once connected
