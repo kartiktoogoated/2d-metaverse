@@ -13,40 +13,36 @@ function HomePage() {
   const navigate = useNavigate(); // ✅ Use React Router navigation
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-black to-cyan-950 text-cyan-100 overflow-hidden">
       <Navbar /> {/* ✅ Ensure Navbar is placed at the top */}
 
-      {/* Radial Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-[500px] h-[500px] radial-blur bg-cyan-600/20 rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse-glow" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] radial-blur bg-blue-600/20 rounded-full translate-x-1/2 -translate-y-1/2 animate-pulse-glow" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-0 left-1/4 w-[800px] h-[800px] radial-blur bg-teal-600/20 rounded-full animate-pulse-glow" style={{ animationDelay: '2s' }} />
-        <div className="absolute -bottom-1/4 right-0 w-[700px] h-[700px] radial-blur bg-emerald-600/20 rounded-full animate-pulse-glow" style={{ animationDelay: '3s' }} />
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full filter blur-3xl animate-pulse-glow"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full filter blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
       </div>
-
-      {/* Grid Pattern Background */}
-      <div className="fixed inset-0 bg-grid-pattern opacity-5" />
 
       {/* Main Sections */}
       <div className="relative min-h-screen pt-16">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-6xl md:text-9xl text-glitch text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-teal-400 mb-6 font-bold hover:scale-105 transition-transform duration-500">
+            <h1 className="text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400 font-extrabold hover:scale-105 transition-transform duration-500">
               METAVERSE 2D
             </h1>
-            <p className="text-2xl md:text-3xl text-cyan-200 mb-12 max-w-3xl mx-auto leading-relaxed font-light typing-animation">
-              &gt; INITIALIZING VIRTUAL WORLD_<br />
-              &gt; CONNECTING PLAYERS_<br />
-              &gt; LOADING EXPERIENCE_
+            <p className="text-2xl md:text-3xl text-cyan-300 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
+              &gt; BOOTING UP DIGITAL REALM_<br />
+              &gt; SYNCHRONIZING PLAYERS_<br />
+              &gt; ENTERING VIRTUAL WORLD_
             </p>
 
             {/* ✅ Navigate to /auth when clicked */}
             <button
               onClick={() => navigate("/auth")}
-              className="px-8 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-teal-600 text-white text-2xl pixel-corners hover:from-cyan-500 hover:via-blue-500 hover:to-teal-500 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 relative group"
+              className="px-8 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 text-white text-2xl rounded-lg hover:from-cyan-500 hover:via-blue-500 hover:to-purple-500 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 relative group"
             >
-              <span className="relative z-10">ACCESS_PORTAL</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded"></div>
+              <span className="relative z-10">ENTER PORTAL</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded"></div>
             </button>
           </div>
 
