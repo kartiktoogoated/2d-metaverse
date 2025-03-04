@@ -21,41 +21,53 @@ function VideoCard() {
         e.preventDefault();
         setError("");
         setLoading(true);
-
-        const endpoint = isSignIn ? "/api/v1/signin" : "/api/v1/signup"; // ✅ Choose API route based on state
+    
+        const endpoint = isSignIn ? "/api/v1/signin" : "/api/v1/signup";
         const apiUrl = `http://localhost:3002${endpoint}`;
-
+    
         if (!isSignIn && formData.password !== formData.confirmPassword) {
             setError("Passwords do not match!");
             setLoading(false);
             return;
         }
-
+    
         try {
+            const payload = isSignIn
+                ? { username: formData.username, password: formData.password } // ✅ Ensure correct format
+                : { username: formData.username, password: formData.password, confirmPassword: formData.confirmPassword };
+    
+            console.log("Sending request to API:", payload); // ✅ Debug log
+    
             const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
+                credentials: "include", // ✅ Include credentials if needed
             });
-
+    
             const data = await response.json();
-            if (!response.ok) throw new Error(data.message || "Authentication failed");
-
+            console.log("API Response:", data); // ✅ Debugging API response
+    
+            if (!response.ok) {
+                throw new Error(data.message || "Authentication failed");
+            }
+    
             if (isSignIn) {
                 localStorage.setItem("token", data.token); // ✅ Store JWT token
                 alert("Login successful!");
-                navigate("/GameDashboard"); // ✅ Redirect after login
+                navigate("/game"); // ✅ Redirect after login
             } else {
                 alert("Signup successful! Please log in.");
                 setIsSignIn(true);
             }
         } catch (err: any) {
+            console.error("Error:", err.message); // ✅ Log exact error
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
-
+    
     return (
         <>
             <div className="h-screen w-full flex justify-center items-center">

@@ -7,7 +7,7 @@ import Navbar from "@repo/ui/components/Navbar.js"; // ✅ Ensure Navbar is incl
 import GameDashboard from "@repo/ui/components/GameDashboard"
 import KnowMore from "@repo/ui/components/KnowMore"
 import Docs from "@repo/ui/components/Docs"
-import WebRTC from "./WebRTC";
+import Game from "@repo/ui/components/Game"
 
 function HomePage() {
   const navigate = useNavigate(); // ✅ Use React Router navigation
@@ -84,12 +84,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage/>} /> ✅ Landing Page
+        <Route path="/" element={<HomePage/>} /> 
         <Route path="/auth" element={<AuthForm />} /> {/* ✅ Auth Form Page */}
         <Route path="/game" element={<GameDashboard />} /> {/* ✅ Game Dashboard Page */}
         <Route path="/knowmore" element={<KnowMore />} /> {/* ✅ KnowMore Page */}
         <Route path="/docs" element={<Docs />} /> {/* ✅ Docs Page */}
-        <Route path="/" element={<WebRTC />} /> {/* ✅ Landing Page */}
+        <Route path="/game/space/:spaceId" element={<Game />} />
       </Routes>
     </Router>
   );
