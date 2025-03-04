@@ -8,7 +8,7 @@ export default function Home() {
   const createRoom = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/room'); // Calls WebSocket server
+      const response = await fetch('http://18.215.159.145:3002/room'); // Calls WebSocket server
       const data = await response.json();
       navigate(`/room/${data.roomId}`); // Redirects user to the new room
     } catch (error) {

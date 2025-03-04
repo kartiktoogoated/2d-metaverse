@@ -23,7 +23,7 @@ function VideoCard() {
         setLoading(true);
     
         const endpoint = isSignIn ? "/api/v1/signin" : "/api/v1/signup";
-        const apiUrl = `http://localhost:3002${endpoint}`;
+        const apiUrl = `http://18.215.159.145:3002${endpoint}`;
     
         if (!isSignIn && formData.password !== formData.confirmPassword) {
             setError("Passwords do not match!");
@@ -33,40 +33,41 @@ function VideoCard() {
     
         try {
             const payload = isSignIn
-                ? { username: formData.username, password: formData.password } // ✅ Ensure correct format
+                ? { username: formData.username, password: formData.password }
                 : { username: formData.username, password: formData.password, confirmPassword: formData.confirmPassword };
     
-            console.log("Sending request to API:", payload); // ✅ Debug log
+            console.log("📡 Sending request to API:", payload);
     
             const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                credentials: "include", // ✅ Include credentials if needed
+                credentials: "include", // ✅ Ensures cookies or tokens are sent
             });
     
             const data = await response.json();
-            console.log("API Response:", data); // ✅ Debugging API response
+            console.log("✅ API Response:", data);
     
             if (!response.ok) {
                 throw new Error(data.message || "Authentication failed");
             }
     
             if (isSignIn) {
-                localStorage.setItem("token", data.token); // ✅ Store JWT token
-                alert("Login successful!");
-                navigate("/game"); // ✅ Redirect after login
+                localStorage.setItem("token", data.token); // ✅ Store JWT
+                alert("✅ Login successful!");
+                navigate("/game");
             } else {
-                alert("Signup successful! Please log in.");
+                alert("✅ Signup successful! Please log in.");
                 setIsSignIn(true);
             }
         } catch (err: any) {
-            console.error("Error:", err.message); // ✅ Log exact error
+            console.error("❌ Error:", err.message);
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
+    
     
     return (
         <>
