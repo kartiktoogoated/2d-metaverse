@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
+  Map, 
   Users, 
   Settings, 
   LogOut, 
@@ -10,7 +13,10 @@ import {
   Crown,
   Zap,
   Star,
-  Sparkles
+  Sparkles,
+  Plus,
+  Trash2,
+  X
 } from 'lucide-react';
 
 interface PlayerStats {
@@ -20,32 +26,38 @@ interface PlayerStats {
   isOnline: boolean;
 }
 
-const GameDashboard: React.FC = () => {
-  const [selectedWorld, setSelectedWorld] = useState<string | null>(null);
+interface Space {
+  id: string;
+  name: string;
+  thumbnail: string;
+  description: string;
+  players: number;
+  difficulty: string;
+}
 
-  const worlds = [
-    {
-      id: '1',
-      name: 'Neo Tokyo',
-      image: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=1000&q=80',
-      players: 128,
-      difficulty: 'Medium'
-    },
-    {
-      id: '2',
-      name: 'Crystal Valley',
-      image: 'https://images.unsplash.com/photo-1502581827181-9cf3c3ee0106?auto=format&fit=crop&w=1000&q=80',
-      players: 95,
-      difficulty: 'Hard'
-    },
-    {
-      id: '3',
-      name: 'Digital Oasis',
-      image: 'https://images.unsplash.com/photo-1510906594845-bc082582c8cc?auto=format&fit=crop&w=1000&q=80',
-      players: 156,
-      difficulty: 'Easy'
+const GameDashboard: React.FC = () => {
+  const navigate = useNavigate(); // ✅ Ensure navigator is defined
+  
+  // ✅ Ensure state includes necessary properties
+  const [spaces, setSpaces] = useState<{ id: string; name: string; thumbnail: string; players: number; difficulty: string; }[]>([]);
+  const [showCreateSpace, setShowCreateSpace] = useState(false);
+  const [newSpace, setNewSpace] = useState({
+    name: "",
+    description: "",
+    dimensions: "10x10",
+    mapId: "",
+    difficulty: "Medium",
+  });
+
+  useEffect(() => {
+    const storedSpaces = sessionStorage.getItem("spaces");
+    if (storedSpaces) {
+      setSpaces(JSON.parse(storedSpaces));
+    } else {
+      fetchSpaces();
     }
-  ];
+  }, []);
+  
 
   const leaderboard: PlayerStats[] = [
     { rank: 1, name: "CyberNinja", score: 15000, isOnline: true },
@@ -63,6 +75,117 @@ const GameDashboard: React.FC = () => {
     playtime: '127h',
     worlds: 8
   };
+
+  const fetchSpaces = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("❌ No token found");
+        return;
+      }
+
+      const response = await fetch("http://localhost:3002/api/v1/space/all", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch spaces");
+
+      const data = await response.json();
+      setSpaces(data.spaces || []);
+    } catch (error) {
+      console.error("❌ Error fetching spaces:", error);
+    }
+  };
+
+  // ✅ Handle space creation
+  const handleCreateSpace = async () => {
+    if (!newSpace.name.trim()) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("❌ No token found");
+        return;
+      }
+
+      const response = await fetch("http://localhost:3002/api/v1/space", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify(newSpace),
+      });
+
+      if (!response.ok) throw new Error("Failed to create space");
+
+      const data = await response.json();
+
+      // ✅ Update spaces state
+      setSpaces((prevSpaces) => [
+        ...prevSpaces,
+        {
+          id: data.spaceId,
+          name: newSpace.name,
+          thumbnail: data.thumbnail || "https://plus.unsplash.com/premium_photo-1669839137069-4166d6ea11f4?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+          players: 0,
+          difficulty: newSpace.difficulty,
+        },
+      ]);
+
+      // ✅ Reset & close modal
+      setShowCreateSpace(false);
+      setNewSpace({ name: "", description: "", dimensions: "10x10", mapId: "", difficulty: "Medium" });
+
+    } catch (error) {
+      console.error("❌ Error creating space:", error);
+    }
+  };
+  
+
+  const handleDeleteSpace = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token"); // Ensure token is included
+      if (!token) {
+        console.error("❌ No token found");
+        return;
+      }
+  
+      const response = await fetch(`http://localhost:3002/api/v1/space/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // ✅ Ensure Authorization header is sent
+        },
+        credentials: "include",
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete space");
+      }
+  
+      setSpaces((prevSpaces) => prevSpaces.filter((space) => space.id !== id)); // ✅ Update UI
+      console.log("✅ Space deleted successfully");
+    } catch (error) {
+      console.error("❌ Error deleting space:", error);
+    }
+  };
+  
+  
+
+  const handleOpenSpace = (spaceId: string) => {
+    if (!spaceId) {
+      console.error("❌ Space ID is missing");
+      return;
+    }
+    navigate(`/game/space/${spaceId}`);
+  };
+  
 
   return (
     <div className="min-h-screen bg-black text-cyan-100">
@@ -167,44 +290,92 @@ const GameDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Available Worlds */}
-          <div className="col-span-6">
-            <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
-              <h2 className="text-xl text-cyan-300 mb-6">Available Worlds</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {worlds.map((world) => (
-                  <div
-                    key={world.id}
-                    className={`group cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                      selectedWorld === world.id
-                        ? 'border-cyan-400'
-                        : 'border-transparent hover:border-cyan-500/50'
-                    }`}
-                    onClick={() => setSelectedWorld(world.id)}
-                  >
-                    <div className="relative h-48">
-                      <img
-                        src={world.image}
-                        alt={world.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-lg text-cyan-300 mb-1">{world.name}</h3>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-cyan-400">
-                            <Users className="w-4 h-4 inline mr-1" />
-                            {world.players}
-                          </span>
-                          <span className="text-cyan-400">{world.difficulty}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          {/* space */}
+<div className="col-span-6">
+  <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-xl text-cyan-300">Your space</h2>
+      <button
+        onClick={() => setShowCreateSpace(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
+      >
+        <Plus size={20} />
+        <span>Create Space</span>
+      </button>
+    </div>
+
+    {spaces.length === 0 ? (
+      <div className="text-center py-12">
+        <Map className="w-16 h-16 mx-auto text-cyan-500/50 mb-4" />
+        <h3 className="text-xl text-cyan-300 mb-2">No space Yet</h3>
+        <p className="text-cyan-400 mb-6">Create your first space to get started</p>
+        <button
+          onClick={() => setShowCreateSpace(true)}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
+        >
+          <Plus size={20} />
+          <span>Create Your First Space</span>
+        </button>
+      </div>
+    ) : (
+      <div className="grid grid-cols-2 gap-4">
+        {spaces.map((space) => (
+          <div
+            key={space.id}
+            className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300"
+          ><div 
+          key={space.id}
+          className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300 relative"
+          onClick={() => handleOpenSpace(space.id)}
+        >
+          {/* Space Image */}
+          <img
+            src={space.thumbnail || 'https://images.unsplash.com/photo-1484589065579-248aad0d8b13?q=80&w=1959&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'}
+            alt={space.name}
+            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+          />
+        
+          {/* Overlay to prevent unwanted click blocking */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+        
+          {/* ✅ Clickable Delete Button (Independent from Parent Click) */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevents the space click event
+              handleDeleteSpace(space.id);
+            }}
+            className="absolute top-3 right-3 bg-red-600 p-2 rounded-full hover:bg-red-700 transition shadow-md z-10"
+          >
+            <Trash2 className="text-white" size={18} />
+          </button>
+        
+          {/* Enter Button (Ensures Click Works) */}
+          <div
+            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <button className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-400 transition-colors z-10">
+              Enter Space
+            </button>
+          
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <h3 className="text-lg text-cyan-300 mb-1">{space.name}</h3>
+                <div className="flex justify-between text-sm">
+                  <span className="text-cyan-400">
+                    <Users className="w-4 h-4 inline mr-1" />
+                    {space.players || 0}
+                  </span>
+                  <span className="text-cyan-400">{space.difficulty || 'Medium'}</span>
+                </div>
               </div>
             </div>
           </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
 
           {/* Leaderboard */}
           <div className="col-span-3">
@@ -238,7 +409,108 @@ const GameDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Create Space Modal */}
+{showCreateSpace && (
+  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-8">
+    <div className="bg-gradient-to-br from-cyan-950/50 to-blue-950/50 rounded-xl border border-cyan-500/30 w-full max-w-lg p-6">
+      {/* Modal Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-2xl text-cyan-300">Create New Space</h3>
+        <button
+          onClick={() => setShowCreateSpace(false)}
+          className="text-cyan-500 hover:text-cyan-300 transition-colors"
+        >
+          <X size={24} />
+        </button>
+      </div>
+
+      {/* Modal Content */}
+      <div className="space-y-4">
+        {/* Space Name */}
+        <div>
+          <label className="block text-cyan-400 mb-2">Space Name</label>
+          <input
+            type="text"
+            value={newSpace.name}
+            onChange={(e) => setNewSpace({ ...newSpace, name: e.target.value })}
+            className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+            placeholder="Enter space name"
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-cyan-400 mb-2">Description</label>
+          <textarea
+            value={newSpace.description}
+            onChange={(e) => setNewSpace({ ...newSpace, description: e.target.value })}
+            className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 h-32"
+            placeholder="Enter a short description"
+            required
+          />
+        </div>
+
+        {/* Dimensions */}
+        <div>
+          <label className="block text-cyan-400 mb-2">Dimensions (Width x Height)</label>
+          <input
+            type="text"
+            value={newSpace.dimensions}
+            onChange={(e) => setNewSpace({ ...newSpace, dimensions: e.target.value })}
+            className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+            placeholder="e.g., 10x10"
+            required
+          />
+        </div>
+
+        {/* Map ID (Optional) */}
+        <div>
+          <label className="block text-cyan-400 mb-2">Map ID (Optional)</label>
+          <input
+            type="text"
+            value={newSpace.mapId || ""}
+            onChange={(e) => setNewSpace({ ...newSpace, mapId: e.target.value })}
+            className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+            placeholder="Enter map ID if available"
+          />
+        </div>
+
+        {/* Difficulty */}
+        <div>
+          <label className="block text-cyan-400 mb-2">Difficulty Level</label>
+          <select
+            value={newSpace.difficulty}
+            onChange={(e) => setNewSpace({ ...newSpace, difficulty: e.target.value })}
+            className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+          >
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 mt-6">
+          <button
+            onClick={() => setShowCreateSpace(false)}
+            className="flex-1 px-4 py-3 border border-cyan-700/50 text-cyan-400 rounded-lg hover:bg-cyan-950/30 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCreateSpace}
+            className="flex-1 px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 transition-colors"
+          >
+            Create Space
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
+)}
+</div>
   );
 };
 

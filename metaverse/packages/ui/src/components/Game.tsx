@@ -1,32 +1,31 @@
-/* eslint-disable no-case-declarations */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import  { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 const Arena = () => {
+  const { spaceId } = useParams<{ spaceId: string }>(); // ✅ Get spaceId from URL
+  const navigate = useNavigate();
   const canvasRef = useRef<any>(null);
   const wsRef = useRef<any>(null);
   const [currentUser, setCurrentUser] = useState<any>({});
   const [users, setUsers] = useState(new Map());
-  const [params, setParams] = useState({ token: '', spaceId: '' });
 
-  // Initialize WebSocket connection and handle URL params
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token') || '';
-    const spaceId = urlParams.get('spaceId') || '';
-    setParams({ token, spaceId });
+    if (!spaceId) {
+      alert("No space ID found!");
+      navigate("/game");
+      return;
+    }
 
-    // Initialize WebSocket
-    wsRef.current = new WebSocket('ws://localhost:3001'); // Replace with your WS_URL
-    
+    // Initialize WebSocket connection
+    wsRef.current = new WebSocket('ws://localhost:3001'); // ✅ Replace with your WS_URL
+
     wsRef.current.onopen = () => {
       // Join the space once connected
       wsRef.current.send(JSON.stringify({
         type: 'join',
-        payload: {
-          spaceId,
-          token
-        }
+        payload: { spaceId }
       }));
     };
 
@@ -40,31 +39,24 @@ const Arena = () => {
         wsRef.current.close();
       }
     };
-  }, []);
+  }, [spaceId, navigate]);
 
   const handleWebSocketMessage = (message: any) => {
     switch (message.type) {
       case 'space-joined':
-        // Initialize current user position and other users
-        console.log("set")
-        console.log({
-            x: message.payload.spawn.x,
-            y: message.payload.spawn.y,
-            userId: message.payload.userId
-          })
-        setCurrentUser({
+        { setCurrentUser({
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
           userId: message.payload.userId
         });
-        
+
         // Initialize other users from the payload
         const userMap = new Map();
         message.payload.users.forEach((user: any) => {
           userMap.set(user.userId, user);
         });
         setUsers(userMap);
-        break;
+        break; }
 
       case 'user-joined':
         setUsers(prev => {
@@ -92,7 +84,6 @@ const Arena = () => {
         break;
 
       case 'movement-rejected':
-        // Reset current user position if movement was rejected
         setCurrentUser((prev: any) => ({
           ...prev,
           x: message.payload.x,
@@ -113,8 +104,7 @@ const Arena = () => {
   // Handle user movement
   const handleMove = (newX: any, newY: any) => {
     if (!currentUser) return;
-    
-    // Send movement request
+
     wsRef.current.send(JSON.stringify({
       type: 'move',
       payload: {
@@ -127,11 +117,9 @@ const Arena = () => {
 
   // Draw the arena
   useEffect(() => {
-    console.log("render")
     const canvas = canvasRef.current;
     if (!canvas) return;
-    console.log("below render")
-    
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -150,12 +138,8 @@ const Arena = () => {
       ctx.stroke();
     }
 
-    console.log("before curerntusert")
-    console.log(currentUser)
     // Draw current user
-    if (currentUser && currentUser.x) {
-        console.log("drawing myself")
-        console.log(currentUser)
+    if (currentUser?.x !== undefined) {
       ctx.beginPath();
       ctx.fillStyle = '#FF6B6B';
       ctx.arc(currentUser.x * 50, currentUser.y * 50, 20, 0, Math.PI * 2);
@@ -168,19 +152,16 @@ const Arena = () => {
 
     // Draw other users
     users.forEach(user => {
-    if (!user.x) {
-        return
-    }
-    console.log("drawing other user")
-    console.log(user)
-      ctx.beginPath();
-      ctx.fillStyle = '#4ECDC4';
-      ctx.arc(user.x * 50, user.y * 50, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#000';
-      ctx.font = '14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`User ${user.userId}`, user.x * 50, user.y * 50 + 40);
+      if (user.x !== undefined) {
+        ctx.beginPath();
+        ctx.fillStyle = '#4ECDC4';
+        ctx.arc(user.x * 50, user.y * 50, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`User ${user.userId}`, user.x * 50, user.y * 50 + 40);
+      }
     });
   }, [currentUser, users]);
 
@@ -205,22 +186,31 @@ const Arena = () => {
   };
 
   return (
-    <div className="p-4" onKeyDown={handleKeyDown} tabIndex={0}>
-        <h1 className="text-2xl font-bold mb-4">Arena</h1>
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">Token: {params.token}</p>
-          <p className="text-sm text-gray-600">Space ID: {params.spaceId}</p>
-          <p className="text-sm text-gray-600">Connected Users: {users.size + (currentUser ? 1 : 0)}</p>
-        </div>
-        <div className="border rounded-lg overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            width={2000}
-            height={2000}
-            className="bg-white"
-          />
-        </div>
-        <p className="mt-2 text-sm text-gray-500">Use arrow keys to move your avatar</p>
+    <div className="relative p-4" onKeyDown={handleKeyDown} tabIndex={0}>
+      {/* Back Button */}
+      <button 
+        onClick={() => navigate('/game')}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-black/50 backdrop-blur-sm text-cyan-300 rounded-lg hover:bg-black/70 transition-colors"
+      >
+        <ArrowLeft size={20} />
+        <span>Back to Worlds</span>
+      </button>
+
+      <h1 className="text-2xl font-bold mb-4">Arena</h1>
+      <div className="mb-4">
+        <p className="text-sm text-gray-600">Space ID: {spaceId}</p>
+        <p className="text-sm text-gray-600">Connected Users: {users.size + (currentUser ? 1 : 0)}</p>
+      </div>
+
+      <div className="border rounded-lg overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          width={2000}
+          height={2000}
+          className="bg-white"
+        />
+      </div>
+      <p className="mt-2 text-sm text-gray-500">Use arrow keys to move your avatar</p>
     </div>
   );
 };
