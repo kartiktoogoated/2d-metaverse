@@ -89,7 +89,7 @@ function App() {
         <Route path="/game" element={<GameDashboard />} /> {/* ✅ Game Dashboard Page */}
         <Route path="/knowmore" element={<KnowMore />} /> {/* ✅ KnowMore Page */}
         <Route path="/docs" element={<Docs />} /> {/* ✅ Docs Page */}
-        <Route path="/web" element={<WebRTC />} /> {/* ✅ Landing Page */}
+        <Route path="/" element={<WebRTC />} /> {/* ✅ Landing Page */}
       </Routes>
     </Router>
   );

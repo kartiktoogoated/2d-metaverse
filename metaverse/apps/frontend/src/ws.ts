@@ -1,71 +1,63 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const WS_URL = "ws://localhost:3001";
-let socket: WebSocket | null = null;
-let onMessageCallback: ((message: any) => void) | null = null;
-const messageQueue: any[] = []; // Store messages if WS is not ready
-let isReconnecting = false;
+// import { io } from 'socket.io-client';
+// import Peer from 'peerjs';
 
-/**
- * Initializes a WebSocket connection and handles reconnections.
- */
-const connectWebSocket = () => {
-  if (socket) {
-    socket.close(); // Close any existing socket before creating a new one
-  }
+// const socket = io('/');
+// const videoGrid = document.getElementById('video-grid') as HTMLDivElement;
+// const myPeer = new Peer(undefined, {
+//   host: '/',
+//   port: '3001',
+// });
 
-  console.log("📡 Establishing WebSocket connection...");
-  socket = new WebSocket(WS_URL);
+// const myVideo = document.createElement('video');
+// myVideo.muted = true;
+// const peers: Record<string, Peer.MediaConnection> = {};
 
-  socket.onopen = () => {
-    console.log("✅ WebSocket connected.");
-    isReconnecting = false;
+// navigator.mediaDevices
+//   .getUserMedia({
+//     video: true,
+//     audio: true,
+//   })
+//   .then((stream) => {
+//     addVideoStream(myVideo, stream);
 
-    // Send any queued messages
-    while (messageQueue.length > 0) {
-      const message = messageQueue.shift();
-      sendMessage(message);
-    }
-  };
+//     myPeer.on('call', (call) => {
+//       call.answer(stream);
+//       const video = document.createElement('video');
+//       call.on('stream', (userVideoStream) => {
+//         addVideoStream(video, userVideoStream);
+//       });
+//     });
 
-  socket.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-    if (onMessageCallback) onMessageCallback(message);
-  };
+//     socket.on('user-connected', (userId: string) => {
+//       connectToNewUser(userId, stream);
+//     });
+//   });
 
-  socket.onclose = (event) => {
-    console.warn("❌ WebSocket disconnected. Reason:", event.reason);
-    if (!isReconnecting) {
-      isReconnecting = true;
-      setTimeout(connectWebSocket, 2000); // Reconnect after 2 seconds
-    }
-  };
+// socket.on('user-disconnected', (userId: string) => {
+//   if (peers[userId]) peers[userId].close();
+// });
 
-  socket.onerror = (error) => {
-    console.error("⚠️ WebSocket error:", error);
-    // Optionally, attempt reconnection if needed on error
-  };
-};
+// myPeer.on('open', (id) => {
+//   socket.emit('join-room', ROOM_ID, id);
+// });
 
-/**
- * Sets the callback function for receiving messages.
- * @param callback Function to handle incoming messages.
- */
-export const setOnMessage = (callback: (message: any) => void) => {
-  onMessageCallback = callback;
-};
+// function connectToNewUser(userId: string, stream: MediaStream) {
+//   const call = myPeer.call(userId, stream);
+//   const video = document.createElement('video');
+//   call.on('stream', (userVideoStream) => {
+//     addVideoStream(video, userVideoStream);
+//   });
+//   call.on('close', () => {
+//     video.remove();
+//   });
 
-/**
- * Sends a message through WebSocket or queues it if not ready.
- * @param message The message to send.
- */
-export const sendMessage = (message: any) => {
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify(message));
-  } else {
-    console.warn("⚠️ WebSocket not open. Queuing message:", message);
-    messageQueue.push(message); // Queue the message if WebSocket isn't open
-  }
-};
+//   peers[userId] = call;
+// }
 
-// Start WebSocket connection on load
-connectWebSocket();
+// function addVideoStream(video: HTMLVideoElement, stream: MediaStream) {
+//   video.srcObject = stream;
+//   video.addEventListener('loadedmetadata', () => {
+//     video.play();
+//   });
+//   videoGrid.append(video);
+// }
