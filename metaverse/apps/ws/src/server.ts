@@ -1,48 +1,55 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import crypto from "crypto";
+import express from 'express';
+import { createServer } from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+import cors from 'cors';
+import { v4 as uuidV4 } from 'uuid';
 
-const wss = new WebSocketServer({ port: 3001 });
-const peers = new Map<string, WebSocket>();
+const app = express();
+const server = createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+  },
+});
 
-wss.on('connection', (ws) => {
-  const userId = crypto.randomUUID();
-  peers.set(userId, ws);
-  console.log(`User connected: ${userId}`);
+app.use(cors());
 
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message.toString());
-      console.log(`🔄 Received WebSocket Message from ${userId}:`, data);
+app.get('/room', (_, res) => {
+  res.json({ roomId: uuidV4() });
+});
 
-      // Check if message type is a valid WebRTC signaling message
-      if (data.type === "offer" || data.type === "answer" || data.type === "ice-candidate") {
-        if (data.to && peers.has(data.to)) {
-          // Don't relay to self
-          if (userId === data.to) {
-            console.warn(`❌ Ignoring self-signaling attempt for ${userId}`);
-            return;
-          }
+const rooms: Record<string, string[]> = {}; // Store users in rooms
 
-          console.log(`📡 Relaying ${data.type} from ${userId} to ${data.to}`);
-          // Send the message to the target peer
-          peers.get(data.to)?.send(JSON.stringify({ from: userId, ...data }));
-        } else {
-          console.warn(`⚠️ Peer not found: ${data.to}`);
-        }
-      } else {
-        console.warn(`⚠️ Invalid message type: ${data.type}`);
-      }
-    } catch (error) {
-      console.error("❌ Error processing WebSocket message:", error);
-      // Optionally, you can send an error response to the client
-      ws.send(JSON.stringify({ error: "Invalid message format" }));
+io.on('connection', (socket) => {
+  console.log("✅ WebSocket: New user connected");
+
+  socket.on('join-room', (roomId: string, userId: string) => {
+    console.log(`📌 User ${userId} joined room ${roomId}`);
+
+    if (!rooms[roomId]) {
+      rooms[roomId] = [];
     }
-  });
+    rooms[roomId].push(userId);
 
-  ws.on('close', () => {
-    peers.delete(userId);
-    console.log(`User disconnected: ${userId}`);
+    socket.join(roomId);
+
+    // Broadcast to existing users that a new user joined
+    socket.to(roomId).emit('user-connected', userId);
+
+    // Send back existing users in the room
+    rooms[roomId].forEach(existingUserId => {
+      if (existingUserId !== userId) {
+        socket.emit('user-connected', existingUserId);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log(`❌ User ${userId} disconnected`);
+      rooms[roomId] = rooms[roomId].filter(id => id !== userId);
+      socket.to(roomId).emit('user-disconnected', userId);
+    });
   });
 });
 
-console.log("WebSocket server running on ws://localhost:3001");
+server.listen(3000, () => console.log('✅ WebSocket Server running on port 3000'));
