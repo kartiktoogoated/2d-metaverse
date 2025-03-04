@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -26,14 +25,6 @@ interface PlayerStats {
   isOnline: boolean;
 }
 
-interface Space {
-  id: string;
-  name: string;
-  thumbnail: string;
-  description: string;
-  players: number;
-  difficulty: string;
-}
 
 const GameDashboard: React.FC = () => {
   const navigate = useNavigate(); // ✅ Ensure navigator is defined
