@@ -12,16 +12,26 @@ export default function Footer() {
             </span>
           </div>
           <div className="flex gap-8">
-            {["DOCS", "SUPPORT", "COMMUNITY"].map((item) => (
+            {[
+              { name: "DOCS", link: "/docs" },
+              { name: "SUPPORT", link: "https://x.com/kartikkkxdd" }, // Twitter for support
+              {
+                name: "COMMUNITY",
+                link: "https://discord.com/users/kartiktoogoated",
+              }, // Discord for community
+            ].map(({ name, link }) => (
               <a
-                key={item}
-                href={item === "DOCS" ? "/docs" : "#"}
+                key={name}
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-cyan-400 hover:text-cyan-300 transition-all duration-300 hover:scale-110 transform"
               >
-                {item}
+                {name}
               </a>
             ))}
           </div>
+
           <div className="flex gap-6">
             {[
               { icon: Github, url: "https://github.com/kartiktoogoated" },

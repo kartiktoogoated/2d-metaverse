@@ -100,22 +100,23 @@ export default function Documentation() {
 
   return (
     <div className="bg-black text-cyan-300 min-h-screen flex flex-col items-center px-6 py-10 pt-20">
-    {/* Navbar */}
-    <nav className="fixed top-0 w-full bg-black/50 backdrop-blur-md border-b border-cyan-900/30 py-4 px-6 flex justify-between items-center z-40">
-      <div className="flex items-center space-x-2">
-        <Sparkles className="w-6 h-6 text-cyan-400" />
-        <span className="text-xl font-semibold">METAVERSE_2D DOCS</span>
-      </div>
-      <div className="mr-10"> {/* Moves the button slightly to the left */}
-        <Link
-          to="/"
-          className="px-4 py-2 bg-cyan-600 rounded-md text-white hover:bg-cyan-500 transition"
-        >
-          HOME
-        </Link>
-      </div>
-    </nav>
-  
+      {/* Navbar */}
+      <nav className="fixed top-0 w-full bg-black/50 backdrop-blur-md border-b border-cyan-900/30 py-4 px-6 flex justify-between items-center z-40">
+        <div className="flex items-center space-x-2">
+          <Sparkles className="w-6 h-6 text-cyan-400" />
+          <span className="text-xl font-semibold">METAVERSE_2D DOCS</span>
+        </div>
+        <div className="mr-10">
+          {" "}
+          {/* Moves the button slightly to the left */}
+          <Link
+            to="/"
+            className="px-4 py-2 bg-cyan-600 rounded-md text-white hover:bg-cyan-500 transition"
+          >
+            HOME
+          </Link>
+        </div>
+      </nav>
 
       {/* Sidebar */}
       <div className="w-full max-w-6xl flex mt-20">
@@ -153,4 +154,3 @@ export default function Documentation() {
     </div>
   );
 }
-
