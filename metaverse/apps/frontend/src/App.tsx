@@ -1,13 +1,19 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import AuthForm from "./AuthForm"; 
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
+import AuthForm from "./AuthForm";
 import Features from "@repo/ui/components/Features.js";
 import Footer from "@repo/ui/components/Footer.js";
 import TechSpecs from "@repo/ui/components/TechSpecs.js";
 import Navbar from "@repo/ui/components/Navbar.js"; // ✅ Ensure Navbar is included
-import GameDashboard from "@repo/ui/components/GameDashboard"
-import KnowMore from "@repo/ui/components/KnowMore"
-import Docs from "@repo/ui/components/Docs"
-import Game from "@repo/ui/components/Game"
+import GameDashboard from "@repo/ui/components/GameDashboard";
+import KnowMore from "@repo/ui/components/KnowMore";
+import Docs from "@repo/ui/components/Docs";
+import Game from "@repo/ui/components/Game";
+import PrivateRoute from "./PrivateRoute";
 
 function HomePage() {
   const navigate = useNavigate(); // ✅ Use React Router navigation
@@ -15,14 +21,15 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-cyan-950 text-cyan-100 overflow-hidden">
       <Navbar /> {/* ✅ Ensure Navbar is placed at the top */}
-
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full filter blur-3xl animate-pulse-glow"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full filter blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }}></div>
+        <div
+          className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full filter blur-3xl animate-pulse-glow"
+          style={{ animationDelay: "1s" }}
+        ></div>
         <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
       </div>
-
       {/* Main Sections */}
       <div className="relative min-h-screen pt-16">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -31,8 +38,10 @@ function HomePage() {
               METAVERSE 2D
             </h1>
             <p className="text-2xl md:text-3xl text-cyan-300 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
-              &gt; BOOTING UP DIGITAL REALM_<br />
-              &gt; SYNCHRONIZING PLAYERS_<br />
+              &gt; BOOTING UP DIGITAL REALM_
+              <br />
+              &gt; SYNCHRONIZING PLAYERS_
+              <br />
               &gt; ENTERING VIRTUAL WORLD_
             </p>
 
@@ -68,7 +77,6 @@ function HomePage() {
           </div>
         </div>
       </div>
-
       <Features />
       <TechSpecs />
       <Footer />
@@ -80,12 +88,16 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage/>} /> 
+        <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthForm />} /> {/* ✅ Auth Form Page */}
-        <Route path="/game" element={<GameDashboard />} /> {/* ✅ Game Dashboard Page */}
-        <Route path="/knowmore" element={<KnowMore />} /> {/* ✅ KnowMore Page */}
+        <Route path="/knowmore" element={<KnowMore />} />{" "}
+        {/* ✅ KnowMore Page */}
         <Route path="/docs" element={<Docs />} /> {/* ✅ Docs Page */}
-        <Route path="/game/space/:spaceId" element={<Game />} />
+        {/* ✅ Protected Routes */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/game" element={<GameDashboard />} />
+          <Route path="/game/space/:spaceId" element={<Game />} />
+        </Route>
       </Routes>
     </Router>
   );
