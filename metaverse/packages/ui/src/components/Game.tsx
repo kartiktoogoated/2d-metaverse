@@ -23,7 +23,7 @@ const Game = () => {
   useEffect(() => {
     if (!spaceId) {
       alert("No space ID found!");
-      navigate("/dashboard");
+      navigate("/gamedashboard");
       return;
     }
 
@@ -312,7 +312,7 @@ const Game = () => {
           className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black to-transparent"
         >
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/gamedashboard")}
             className="flex items-center gap-2 px-4 py-2 bg-cyan-950/50 backdrop-blur-sm text-cyan-300 rounded-lg hover:bg-cyan-900/50 transition-all duration-300"
           >
             <ArrowLeft size={20} />

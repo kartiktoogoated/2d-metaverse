@@ -25,10 +25,15 @@ interface PlayerStats {
   isOnline: boolean;
 }
 
+interface ChatMessage {
+  sender: "bot" | "user";
+  text: string;
+}
+
 const GameDashboard: React.FC = () => {
   const navigate = useNavigate(); // ✅ Ensure navigator is defined
 
-  // ✅ Ensure state includes necessary properties
+  // ====== Spaces & Modals ======
   const [spaces, setSpaces] = useState<
     {
       id: string;
@@ -47,15 +52,14 @@ const GameDashboard: React.FC = () => {
     difficulty: "Medium",
   });
 
-  useEffect(() => {
-    const storedSpaces = sessionStorage.getItem("spaces");
-    if (storedSpaces) {
-      setSpaces(JSON.parse(storedSpaces));
-    } else {
-      fetchSpaces();
-    }
-  }, []);
+  // ====== Chatbot State ======
+  const [showChatbot, setShowChatbot] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { sender: "bot", text: "Hello Commander, how can I assist you today?" },
+  ]);
+  const [userInput, setUserInput] = useState("");
 
+  // ====== Example Leaderboard & Player Stats ======
   const leaderboard: PlayerStats[] = [
     { rank: 1, name: "CyberNinja", score: 15000, isOnline: true },
     { rank: 2, name: "PixelMaster", score: 14500, isOnline: false },
@@ -73,6 +77,17 @@ const GameDashboard: React.FC = () => {
     worlds: 8,
   };
 
+  // ====== Lifecycle ======
+  useEffect(() => {
+    const storedSpaces = sessionStorage.getItem("spaces");
+    if (storedSpaces) {
+      setSpaces(JSON.parse(storedSpaces));
+    } else {
+      fetchSpaces();
+    }
+  }, []);
+
+  // ====== Fetch Spaces ======
   const fetchSpaces = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -81,16 +96,13 @@ const GameDashboard: React.FC = () => {
         return;
       }
 
-      const response = await fetch(
-        "http://18.215.159.145:3002/api/v1/space/all",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        }
-      );
+      const response = await fetch("http://18.215.159.145:3002/api/v1/space/all", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
 
       if (!response.ok) throw new Error("Failed to fetch spaces");
 
@@ -101,7 +113,7 @@ const GameDashboard: React.FC = () => {
     }
   };
 
-  // ✅ Handle space creation
+  // ====== Create Space ======
   const handleCreateSpace = async () => {
     if (!newSpace.name.trim()) return;
 
@@ -154,37 +166,36 @@ const GameDashboard: React.FC = () => {
     }
   };
 
+  // ====== Delete Space ======
   const handleDeleteSpace = async (id: string) => {
     try {
-      const token = localStorage.getItem("token"); // Ensure token is included
+      const token = localStorage.getItem("token");
       if (!token) {
         console.error("❌ No token found");
         return;
       }
 
-      const response = await fetch(
-        `http://18.215.159.145:3002/api/v1/space/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ✅ Ensure Authorization header is sent
-          },
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`http://18.215.159.145:3002/api/v1/space/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
 
       if (!response.ok) {
         throw new Error("Failed to delete space");
       }
 
-      setSpaces((prevSpaces) => prevSpaces.filter((space) => space.id !== id)); // ✅ Update UI
+      setSpaces((prevSpaces) => prevSpaces.filter((space) => space.id !== id));
       console.log("✅ Space deleted successfully");
     } catch (error) {
       console.error("❌ Error deleting space:", error);
     }
   };
 
+  // ====== Navigation ======
   const handleOpenSpace = (spaceId: string) => {
     if (!spaceId) {
       console.error("❌ Space ID is missing");
@@ -200,6 +211,24 @@ const GameDashboard: React.FC = () => {
     document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     // ✅ Redirect to home page
     navigate("/");
+  };
+
+  // ====== Chatbot Handlers ======
+  const handleSendMessage = () => {
+    if (!userInput.trim()) return;
+
+    // Add user message
+    const userMsg: ChatMessage = { sender: "user", text: userInput.trim() };
+    setChatMessages((prev) => [...prev, userMsg]);
+    setUserInput("");
+
+    // Simulate a bot response (for demo). Replace with your own logic/WS call
+    setTimeout(() => {
+      setChatMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "This is a response from the chatbot!" },
+      ]);
+    }, 1000);
   };
 
   return (
@@ -219,7 +248,12 @@ const GameDashboard: React.FC = () => {
           <button className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group hover:bg-cyan-500/30 transition-all">
             <Users className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300" />
           </button>
-          <button className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group hover:bg-cyan-500/30 transition-all">
+
+          {/* Chatbot Toggle Button */}
+          <button
+            onClick={() => setShowChatbot((prev) => !prev)}
+            className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group hover:bg-cyan-500/30 transition-all"
+          >
             <MessageSquare className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300" />
           </button>
         </div>
@@ -242,7 +276,7 @@ const GameDashboard: React.FC = () => {
         <div className="flex justify-between items-center mb-12">
           <div>
             <h1 className="text-4xl font-bold text-cyan-300 mb-2">
-              Welcome back, Commander
+              Welcome back,
             </h1>
             <p className="text-cyan-400">
               Your next mission awaits in the digital realm
@@ -322,7 +356,7 @@ const GameDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* space */}
+          {/* Spaces */}
           <div className="col-span-6">
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <div className="flex justify-between items-center mb-6">
@@ -359,7 +393,6 @@ const GameDashboard: React.FC = () => {
                       className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300"
                     >
                       <div
-                        key={space.id}
                         className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300 relative"
                         onClick={() => handleOpenSpace(space.id)}
                       >
@@ -373,10 +406,10 @@ const GameDashboard: React.FC = () => {
                           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
                         />
 
-                        {/* Overlay to prevent unwanted click blocking */}
+                        {/* Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
-                        {/* ✅ Clickable Delete Button (Independent from Parent Click) */}
+                        {/* Delete Button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation(); // Prevents the space click event
@@ -387,7 +420,7 @@ const GameDashboard: React.FC = () => {
                           <Trash2 className="text-white" size={18} />
                         </button>
 
-                        {/* Enter Button (Ensures Click Works) */}
+                        {/* Enter Button */}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <button className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-400 transition-colors z-10">
                             Enter Space
@@ -430,10 +463,10 @@ const GameDashboard: React.FC = () => {
                         player.rank === 1
                           ? "bg-yellow-500/20"
                           : player.rank === 2
-                            ? "bg-gray-400/20"
-                            : player.rank === 3
-                              ? "bg-amber-700/20"
-                              : "bg-cyan-800/20"
+                          ? "bg-gray-400/20"
+                          : player.rank === 3
+                          ? "bg-amber-700/20"
+                          : "bg-cyan-800/20"
                       }`}
                     >
                       {player.rank === 1 && (
@@ -447,7 +480,9 @@ const GameDashboard: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-cyan-300">{player.name}</span>
                         <span
-                          className={`w-2 h-2 rounded-full ${player.isOnline ? "bg-green-400" : "bg-gray-400"}`}
+                          className={`w-2 h-2 rounded-full ${
+                            player.isOnline ? "bg-green-400" : "bg-gray-400"
+                          }`}
                         />
                       </div>
                       <p className="text-sm text-cyan-400">
@@ -574,6 +609,63 @@ const GameDashboard: React.FC = () => {
                   Create Space
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chatbot Modal */}
+      {showChatbot && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-cyan-950/50 to-blue-950/50 rounded-xl border border-cyan-500/30 w-full max-w-md p-6">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl text-cyan-300">AI Assistant</h3>
+              <button
+                onClick={() => setShowChatbot(false)}
+                className="text-cyan-500 hover:text-cyan-300 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex flex-col space-y-2 max-h-80 overflow-y-auto mb-4">
+              {chatMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    msg.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`p-3 rounded-lg max-w-xs ${
+                      msg.sender === "user"
+                        ? "bg-cyan-700 text-white"
+                        : "bg-cyan-900/50 text-cyan-100"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input & Send Button */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                className="flex-1 bg-black/50 border border-cyan-700/50 text-cyan-100 px-3 py-2 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+                placeholder="Type your message..."
+              />
+              <button
+                onClick={handleSendMessage}
+                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 transition-colors"
+              >
+                Send
+              </button>
             </div>
           </div>
         </div>

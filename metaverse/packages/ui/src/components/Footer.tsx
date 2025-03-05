@@ -11,7 +11,7 @@ export default function Footer() {
               METAVERSE_2D
             </span>
           </div>
-          <div className="flex gap-8">
+          <div className="text-center flex gap-8">
             {[
               { name: "DOCS", link: "/docs" },
               { name: "SUPPORT", link: "https://x.com/kartikkkxdd" }, // Twitter for support
