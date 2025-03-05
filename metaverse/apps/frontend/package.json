@@ -17,6 +17,7 @@
     "agora-rtm-sdk": "^2.2.1",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
+    "framer-motion": "^12.4.10",
     "jsonwebtoken": "^9.0.2",
     "peerjs": "^1.5.4",
     "react": "^19.0.0",
