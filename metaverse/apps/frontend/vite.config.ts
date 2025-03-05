@@ -10,13 +10,20 @@ export default defineConfig({
     },
   },
   server: {
-    host: "0.0.0.0",  // Allow external connections
+    host: "0.0.0.0", // Allow external connections
     port: 5173,
     strictPort: true,
     hmr: {
-      clientPort: 443,  // Needed for Cloudflare
+      clientPort: 443, // Needed for Cloudflare
     },
     cors: true,
+    proxy: {
+      "/api": {
+        target: "http://18.215.159.145:3002", // ✅ Forward API calls to backend
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ""), // ✅ Remove "/api" prefix before forwarding
+      },
+    },
   },
 });
-

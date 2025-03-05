@@ -2,6 +2,7 @@ import { Router } from "express";
 import { userRouter } from "./user";
 import { spaceRouter } from "./space";
 import { adminRouter } from "./admin";
+import { chatbotRouter } from "../../chatbot"
 import { SigninSchema, SignupSchema } from "../../types";
 import {hash, compare} from "../../scrypt";
 import client from "@repo/db/client";
@@ -13,7 +14,7 @@ export const router = Router();
 
 router.use(corsMiddleware);
 
-router.post("/signup", async (req, res) => {
+router.post("/signup",corsMiddleware, async (req, res) => {
     console.log("inside signup")
     const parsedData = SignupSchema.safeParse(req.body)
     if (!parsedData.success) {
@@ -42,7 +43,7 @@ router.post("/signup", async (req, res) => {
     }
 })
 
-router.post("/signin", async (req, res) => {
+router.post("/signin",corsMiddleware, async (req, res) => {
     const parsedData = SigninSchema.safeParse(req.body)
     if (!parsedData.success) {
         res.status(403).json({message: "Validation failed"})
@@ -104,4 +105,7 @@ router.get("/avatars", async (req, res) => {
 router.use("/user", userRouter)
 router.use("/space", spaceRouter)
 router.use("/admin", adminRouter)
+router.use("/chatbots", chatbotRouter);
+
+
 

@@ -17,6 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import Chatbot from "./ChatBot"; // adjust the path to your Chatbot.tsx file
 
 interface PlayerStats {
   rank: number;
@@ -25,15 +26,10 @@ interface PlayerStats {
   isOnline: boolean;
 }
 
-interface ChatMessage {
-  sender: "bot" | "user";
-  text: string;
-}
-
 const GameDashboard: React.FC = () => {
-  const navigate = useNavigate(); // ✅ Ensure navigator is defined
+  const navigate = useNavigate();
 
-  // ====== Spaces & Modals ======
+  // ===== Spaces State =====
   const [spaces, setSpaces] = useState<
     {
       id: string;
@@ -52,14 +48,18 @@ const GameDashboard: React.FC = () => {
     difficulty: "Medium",
   });
 
-  // ====== Chatbot State ======
+  // ===== Chatbot State =====
   const [showChatbot, setShowChatbot] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { sender: "bot", text: "Hello Commander, how can I assist you today?" },
-  ]);
-  const [userInput, setUserInput] = useState("");
 
-  // ====== Example Leaderboard & Player Stats ======
+  useEffect(() => {
+    const storedSpaces = sessionStorage.getItem("spaces");
+    if (storedSpaces) {
+      setSpaces(JSON.parse(storedSpaces));
+    } else {
+      fetchSpaces();
+    }
+  }, []);
+
   const leaderboard: PlayerStats[] = [
     { rank: 1, name: "CyberNinja", score: 15000, isOnline: true },
     { rank: 2, name: "PixelMaster", score: 14500, isOnline: false },
@@ -77,17 +77,6 @@ const GameDashboard: React.FC = () => {
     worlds: 8,
   };
 
-  // ====== Lifecycle ======
-  useEffect(() => {
-    const storedSpaces = sessionStorage.getItem("spaces");
-    if (storedSpaces) {
-      setSpaces(JSON.parse(storedSpaces));
-    } else {
-      fetchSpaces();
-    }
-  }, []);
-
-  // ====== Fetch Spaces ======
   const fetchSpaces = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -95,7 +84,6 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-
       const response = await fetch("http://18.215.159.145:3002/api/v1/space/all", {
         method: "GET",
         headers: {
@@ -105,7 +93,6 @@ const GameDashboard: React.FC = () => {
       });
 
       if (!response.ok) throw new Error("Failed to fetch spaces");
-
       const data = await response.json();
       setSpaces(data.spaces || []);
     } catch (error) {
@@ -113,17 +100,15 @@ const GameDashboard: React.FC = () => {
     }
   };
 
-  // ====== Create Space ======
+  // Handle space creation
   const handleCreateSpace = async () => {
     if (!newSpace.name.trim()) return;
-
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("❌ No token found");
         return;
       }
-
       const response = await fetch("http://18.215.159.145:3002/api/v1/space", {
         method: "POST",
         headers: {
@@ -133,12 +118,8 @@ const GameDashboard: React.FC = () => {
         credentials: "include",
         body: JSON.stringify(newSpace),
       });
-
       if (!response.ok) throw new Error("Failed to create space");
-
       const data = await response.json();
-
-      // ✅ Update spaces state
       setSpaces((prevSpaces) => [
         ...prevSpaces,
         {
@@ -146,13 +127,11 @@ const GameDashboard: React.FC = () => {
           name: newSpace.name,
           thumbnail:
             data.thumbnail ||
-            "https://plus.unsplash.com/premium_photo-1669839137069-4166d6ea11f4?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            "https://plus.unsplash.com/premium_photo-1669839137069-4166d6ea11f4?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
           players: 0,
           difficulty: newSpace.difficulty,
         },
       ]);
-
-      // ✅ Reset & close modal
       setShowCreateSpace(false);
       setNewSpace({
         name: "",
@@ -166,7 +145,6 @@ const GameDashboard: React.FC = () => {
     }
   };
 
-  // ====== Delete Space ======
   const handleDeleteSpace = async (id: string) => {
     try {
       const token = localStorage.getItem("token");
@@ -174,7 +152,6 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-
       const response = await fetch(`http://18.215.159.145:3002/api/v1/space/${id}`, {
         method: "DELETE",
         headers: {
@@ -183,11 +160,7 @@ const GameDashboard: React.FC = () => {
         },
         credentials: "include",
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete space");
-      }
-
+      if (!response.ok) throw new Error("Failed to delete space");
       setSpaces((prevSpaces) => prevSpaces.filter((space) => space.id !== id));
       console.log("✅ Space deleted successfully");
     } catch (error) {
@@ -195,7 +168,6 @@ const GameDashboard: React.FC = () => {
     }
   };
 
-  // ====== Navigation ======
   const handleOpenSpace = (spaceId: string) => {
     if (!spaceId) {
       console.error("❌ Space ID is missing");
@@ -205,30 +177,10 @@ const GameDashboard: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // ✅ Remove stored authentication token
     localStorage.removeItem("token");
     sessionStorage.clear();
     document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    // ✅ Redirect to home page
     navigate("/");
-  };
-
-  // ====== Chatbot Handlers ======
-  const handleSendMessage = () => {
-    if (!userInput.trim()) return;
-
-    // Add user message
-    const userMsg: ChatMessage = { sender: "user", text: userInput.trim() };
-    setChatMessages((prev) => [...prev, userMsg]);
-    setUserInput("");
-
-    // Simulate a bot response (for demo). Replace with your own logic/WS call
-    setTimeout(() => {
-      setChatMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: "This is a response from the chatbot!" },
-      ]);
-    }, 1000);
   };
 
   return (
@@ -248,10 +200,8 @@ const GameDashboard: React.FC = () => {
           <button className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group hover:bg-cyan-500/30 transition-all">
             <Users className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300" />
           </button>
-
-          {/* Chatbot Toggle Button */}
           <button
-            onClick={() => setShowChatbot((prev) => !prev)}
+            onClick={() => setShowChatbot(true)}
             className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group hover:bg-cyan-500/30 transition-all"
           >
             <MessageSquare className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300" />
@@ -356,7 +306,7 @@ const GameDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Spaces */}
+          {/* Your Space */}
           <div className="col-span-6">
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <div className="flex justify-between items-center mb-6">
@@ -369,7 +319,6 @@ const GameDashboard: React.FC = () => {
                   <span>Create Space</span>
                 </button>
               </div>
-
               {spaces.length === 0 ? (
                 <div className="text-center py-12">
                   <Map className="w-16 h-16 mx-auto text-cyan-500/50 mb-4" />
@@ -396,31 +345,24 @@ const GameDashboard: React.FC = () => {
                         className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300 relative"
                         onClick={() => handleOpenSpace(space.id)}
                       >
-                        {/* Space Image */}
                         <img
                           src={
                             space.thumbnail ||
-                            "https://images.unsplash.com/photo-1484589065579-248aad0d8b13?q=80&w=1959&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                            "https://images.unsplash.com/photo-1484589065579-248aad0d8b13?q=80&w=1959&auto=format&fit=crop"
                           }
                           alt={space.name}
                           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
                         />
-
-                        {/* Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-
-                        {/* Delete Button */}
                         <button
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevents the space click event
+                            e.stopPropagation();
                             handleDeleteSpace(space.id);
                           }}
                           className="absolute top-3 right-3 bg-red-600 p-2 rounded-full hover:bg-red-700 transition shadow-md z-10"
                         >
                           <Trash2 className="text-white" size={18} />
                         </button>
-
-                        {/* Enter Button */}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <button className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-400 transition-colors z-10">
                             Enter Space
@@ -501,7 +443,6 @@ const GameDashboard: React.FC = () => {
       {showCreateSpace && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-8">
           <div className="bg-gradient-to-br from-cyan-950/50 to-blue-950/50 rounded-xl border border-cyan-500/30 w-full max-w-lg p-6">
-            {/* Modal Header */}
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl text-cyan-300">Create New Space</h3>
               <button
@@ -511,10 +452,7 @@ const GameDashboard: React.FC = () => {
                 <X size={24} />
               </button>
             </div>
-
-            {/* Modal Content */}
             <div className="space-y-4">
-              {/* Space Name */}
               <div>
                 <label className="block text-cyan-400 mb-2">Space Name</label>
                 <input
@@ -528,8 +466,6 @@ const GameDashboard: React.FC = () => {
                   required
                 />
               </div>
-
-              {/* Description */}
               <div>
                 <label className="block text-cyan-400 mb-2">Description</label>
                 <textarea
@@ -542,8 +478,6 @@ const GameDashboard: React.FC = () => {
                   required
                 />
               </div>
-
-              {/* Dimensions */}
               <div>
                 <label className="block text-cyan-400 mb-2">
                   Dimensions (Width x Height)
@@ -559,12 +493,8 @@ const GameDashboard: React.FC = () => {
                   required
                 />
               </div>
-
-              {/* Map ID (Optional) */}
               <div>
-                <label className="block text-cyan-400 mb-2">
-                  Map ID (Optional)
-                </label>
+                <label className="block text-cyan-400 mb-2">Map ID (Optional)</label>
                 <input
                   type="text"
                   value={newSpace.mapId || ""}
@@ -575,12 +505,8 @@ const GameDashboard: React.FC = () => {
                   placeholder="Enter map ID if available"
                 />
               </div>
-
-              {/* Difficulty */}
               <div>
-                <label className="block text-cyan-400 mb-2">
-                  Difficulty Level
-                </label>
+                <label className="block text-cyan-400 mb-2">Difficulty Level</label>
                 <select
                   value={newSpace.difficulty}
                   onChange={(e) =>
@@ -593,8 +519,6 @@ const GameDashboard: React.FC = () => {
                   <option value="Hard">Hard</option>
                 </select>
               </div>
-
-              {/* Action Buttons */}
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={() => setShowCreateSpace(false)}
@@ -613,63 +537,8 @@ const GameDashboard: React.FC = () => {
           </div>
         </div>
       )}
-
       {/* Chatbot Modal */}
-      {showChatbot && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-cyan-950/50 to-blue-950/50 rounded-xl border border-cyan-500/30 w-full max-w-md p-6">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl text-cyan-300">AI Assistant</h3>
-              <button
-                onClick={() => setShowChatbot(false)}
-                className="text-cyan-500 hover:text-cyan-300 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex flex-col space-y-2 max-h-80 overflow-y-auto mb-4">
-              {chatMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${
-                    msg.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`p-3 rounded-lg max-w-xs ${
-                      msg.sender === "user"
-                        ? "bg-cyan-700 text-white"
-                        : "bg-cyan-900/50 text-cyan-100"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Input & Send Button */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                className="flex-1 bg-black/50 border border-cyan-700/50 text-cyan-100 px-3 py-2 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
-                placeholder="Type your message..."
-              />
-              <button
-                onClick={handleSendMessage}
-                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 transition-colors"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Chatbot show={showChatbot} onClose={() => setShowChatbot(false)} />
     </div>
   );
 };
