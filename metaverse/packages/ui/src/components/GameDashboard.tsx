@@ -193,6 +193,15 @@ const GameDashboard: React.FC = () => {
     navigate(`/game/space/${spaceId}`);
   };
 
+  const handleLogout = () => {
+    // ✅ Remove stored authentication token
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+    document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    // ✅ Redirect to home page
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-black text-cyan-100">
       {/* Sidebar */}
@@ -218,7 +227,10 @@ const GameDashboard: React.FC = () => {
           <button className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group hover:bg-cyan-500/30 transition-all">
             <Settings className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300" />
           </button>
-          <button className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center group hover:bg-red-500/30 transition-all">
+          <button
+            onClick={handleLogout}
+            className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center group hover:bg-red-500/30 transition-all"
+          >
             <LogOut className="w-6 h-6 text-red-400 group-hover:text-red-300" />
           </button>
         </div>
