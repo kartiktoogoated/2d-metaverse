@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Map,
@@ -50,6 +50,11 @@ const GameDashboard: React.FC = () => {
 
   // ===== Chatbot State =====
   const [showChatbot, setShowChatbot] = useState(false);
+
+  // ===== Join Space Form State =====
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [joinToken, setJoinToken] = useState("");
+  const [joinSpaceId, setJoinSpaceId] = useState("");
 
   useEffect(() => {
     const storedSpaces = sessionStorage.getItem("spaces");
@@ -168,12 +173,21 @@ const GameDashboard: React.FC = () => {
     }
   };
 
-  const handleOpenSpace = (spaceId: string) => {
-    if (!spaceId) {
-      console.error("❌ Space ID is missing");
+  // Open the join space modal
+  const handleOpenJoinForm = () => {
+    setShowJoinForm(true);
+  };
+
+  // Handle join form submission
+  const handleJoinSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!joinToken || !joinSpaceId) {
+      alert("Please enter both Token and Space ID");
       return;
     }
-    navigate(`/game/space/${spaceId}`);
+    // Navigate to /game with the provided token and spaceId as query parameters
+    navigate(`/game?spaceId=${joinSpaceId}&token=${joinToken}`);
+    setShowJoinForm(false);
   };
 
   const handleLogout = () => {
@@ -248,6 +262,16 @@ const GameDashboard: React.FC = () => {
               <User className="w-6 h-6 text-cyan-400" />
             </div>
           </div>
+        </div>
+
+        {/* Extra Join Space Button */}
+        <div className="mb-8">
+          <button
+            onClick={handleOpenJoinForm}
+            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
+          >
+            Join a Friend’s Space
+          </button>
         </div>
 
         {/* Grid Layout */}
@@ -343,7 +367,7 @@ const GameDashboard: React.FC = () => {
                     >
                       <div
                         className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300 relative"
-                        onClick={() => handleOpenSpace(space.id)}
+                        onClick={() => handleOpenJoinForm()}
                       >
                         <img
                           src={
@@ -537,6 +561,61 @@ const GameDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Join Space Modal */}
+      {showJoinForm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-8">
+          <div className="bg-cyan-950/50 border border-cyan-500/30 rounded-xl p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl text-cyan-300">Join Space</h3>
+              <button
+                onClick={() => setShowJoinForm(false)}
+                className="text-cyan-500 hover:text-cyan-300 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleJoinSubmit} className="space-y-4">
+              <div>
+                <label className="block text-cyan-400 mb-2">Token</label>
+                <input
+                  type="text"
+                  value={joinToken}
+                  onChange={(e) => setJoinToken(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-cyan-700/50 text-cyan-100 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+                  placeholder="Enter your token"
+                />
+              </div>
+              <div>
+                <label className="block text-cyan-400 mb-2">Space ID</label>
+                <input
+                  type="text"
+                  value={joinSpaceId}
+                  onChange={(e) => setJoinSpaceId(e.target.value)}
+                  className="w-full px-4 py-2 bg-black/50 border border-cyan-700/50 text-cyan-100 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+                  placeholder="Enter the space ID"
+                />
+              </div>
+              <div className="flex justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowJoinForm(false)}
+                  className="px-4 py-2 text-cyan-400 border border-cyan-700/50 rounded-lg hover:bg-cyan-950/30 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 transition-colors"
+                >
+                  Join
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Chatbot Modal */}
       <Chatbot show={showChatbot} onClose={() => setShowChatbot(false)} />
     </div>

@@ -89,7 +89,7 @@ const KnowMore: React.FC = () => {
                 </li>
                 <li>
                   <Link
-                    to="/game"
+                    to="/dashboard"
                     className="text-cyan-400 hover:text-cyan-100 transition-colors"
                   >
                     Dashboard
@@ -795,7 +795,7 @@ const KnowMore: React.FC = () => {
 
             <div className="flex flex-wrap justify-center gap-6">
               <Link
-                to="/game"
+                to="/dashboard"
                 className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg text-white font-medium hover:from-cyan-400 hover:to-purple-400 transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-2"
               >
                 <span>Get Started Now</span>

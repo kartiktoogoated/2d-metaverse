@@ -15,9 +15,9 @@ export default function AuthForm() {
         </div>
 
         <div className="flex space-x-4">
-          {/* ✅ Redirect to /game when clicked */}
+          {/* ✅ Redirect to /dashboard when clicked */}
           <button
-            onClick={() => navigate("/game")}
+            onClick={() => navigate("/dashboard")}
             className="px-6 py-2 bg-gradient-to-r from-green-600 via-teal-600 to-blue-600 text-white rounded-full hover:from-green-500 hover:via-teal-500 hover:to-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 font-medium tracking-wide"
           >
             GAME
