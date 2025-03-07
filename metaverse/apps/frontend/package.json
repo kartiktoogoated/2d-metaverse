@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview --port 3000 --host",
-    "start": "vite preview --port 3000 --host"
+    "start": "vite preview --port 3000 --host",
+    "aws" : "tsc -b && vite build && aws s3 sync dist/ s3://kartiktoogoated"
   },
   "dependencies": {
     "@repo/tailwind-config": "workspace:*",

@@ -14,17 +14,18 @@ import GameDashboard from "@repo/ui/components/GameDashboard";
 import KnowMore from "@repo/ui/components/KnowMore";
 import Docs from "@repo/ui/components/Docs";
 import Game from "@repo/ui/components/Game";
+import Blog from "@repo/ui/components/Blog"
 import PrivateRoute from "./PrivateRoute";
 
 function HomePage() {
   const navigate = useNavigate();
-  const { scrollYProgress } = useScroll();
-  const y = useSpring(useTransform(scrollYProgress, [0, 1], [0, -100]));
+  // Reduced y transform range to minimize the upward shift.
+  const y = useSpring(useTransform(useScroll().scrollYProgress, [0, 1], [0, -20]));
 
   return (
-    <div className="min-h-screen bg-black text-cyan-100 overflow-hidden">
+    <div className="min-h-screen bg-black text-cyan-100">
       <Navbar />
-      
+
       {/* Dynamic Background */}
       <div className="fixed inset-0 z-0">
         {/* Animated Grid */}
@@ -33,7 +34,7 @@ function HomePage() {
           style={{
             backgroundImage: "linear-gradient(to right, rgba(34, 211, 238, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(34, 211, 238, 0.05) 1px, transparent 1px)",
             backgroundSize: "40px 40px",
-            y
+            y, // Subtle parallax effect
           }}
         />
 
@@ -52,7 +53,7 @@ function HomePage() {
           transition={{
             duration: 20,
             repeat: Infinity,
-            ease: "linear"
+            ease: "linear",
           }}
         />
 
@@ -138,16 +139,14 @@ function HomePage() {
                 hidden: { opacity: 0 },
                 visible: {
                   opacity: 1,
-                  transition: {
-                    staggerChildren: 0.3,
-                  },
+                  transition: { staggerChildren: 0.3 },
                 },
               }}
             >
               {[
                 "BOOTING UP DIGITAL REALM_",
                 "SYNCHRONIZING PLAYERS_",
-                "ENTERING VIRTUAL WORLD_"
+                "ENTERING VIRTUAL WORLD_",
               ].map((text, i) => (
                 <motion.p
                   key={i}
@@ -187,9 +186,7 @@ function HomePage() {
               hidden: { opacity: 0 },
               visible: {
                 opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                },
+                transition: { staggerChildren: 0.1 },
               },
             }}
           >
@@ -204,14 +201,8 @@ function HomePage() {
                 whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
               >
                 <motion.div
-                  animate={{
-                    y: [0, -10, 0],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                  }}
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
                 >
                   <img
                     src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=player${i}&backgroundColor=transparent`}
@@ -244,6 +235,7 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
+          <Route path="/blog" element={<Blog />} />
           <Route path="/dashboard" element={<GameDashboard />} />
           <Route path="/game" element={<Game />} />
         </Route>
