@@ -236,13 +236,16 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthForm />} />
         <Route path="/knowmore" element={<KnowMore />} />
         <Route path="/docs" element={<Docs />} />
+
+        {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
-          <Route path="/game" element={<GameDashboard />} />
-          <Route path="/game/space/:spaceId" element={<Game />} />
+          <Route path="/dashboard" element={<GameDashboard />} />
+          <Route path="/game" element={<Game />} />
         </Route>
       </Routes>
     </Router>

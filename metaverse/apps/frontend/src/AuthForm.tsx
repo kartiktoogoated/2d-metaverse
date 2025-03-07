@@ -63,7 +63,7 @@ function VideoCard() {
       if (isSignIn) {
         localStorage.setItem("token", data.token); // ✅ Store JWT
         alert("✅ Login successful!");
-        navigate("/game");
+        navigate("/dashboard");
       } else {
         alert("✅ Signup successful! Please log in.");
         setIsSignIn(true);
