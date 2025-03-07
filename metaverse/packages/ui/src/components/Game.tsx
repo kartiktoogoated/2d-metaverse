@@ -4,12 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 const Game = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Current user info
   const [currentUser, setCurrentUser] = useState<any>({});
+  // Map of other users in the space
   const [users, setUsers] = useState(new Map());
+  // Store token & spaceId from query params
   const [params, setParams] = useState({ token: '', spaceId: '' });
+  // Track WebSocket connection state
   const [isConnected, setIsConnected] = useState(false);
 
-  // Helper: Only send if the connection is fully open
+  // Helper function: only send if the connection is open
   const sendMessage = (message: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
@@ -18,7 +23,7 @@ const Game = () => {
     }
   };
 
-  // Establish WebSocket connection using query parameters
+  // On mount: read query params, connect WebSocket, join space
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token') || '';
@@ -30,14 +35,14 @@ const Game = () => {
       return;
     }
 
-    // Create the WebSocket connection to your EC2 instance.
+    // Create the WebSocket connection
     const ws = new WebSocket('ws://18.215.159.145:3001'); 
     wsRef.current = ws;
 
     ws.onopen = () => {
       console.log("WebSocket connection opened.");
       setIsConnected(true);
-      // Now that the connection is open, send the join message.
+      // Send join message with both spaceId & token
       sendMessage({
         type: 'join',
         payload: { spaceId, token }
@@ -63,23 +68,28 @@ const Game = () => {
     };
   }, []);
 
+  // Handle server messages
   const handleWebSocketMessage = (message: any) => {
     switch (message.type) {
-      case 'space-joined':
+      case 'space-joined': {
+        // Set our own user data
         setCurrentUser({
           x: message.payload.spawn.x,
           y: message.payload.spawn.y,
           userId: message.payload.userId
         });
-        {
-          const userMap = new Map();
-          message.payload.users.forEach((user: any) => {
-            userMap.set(user.userId, user);
-          });
-          setUsers(userMap);
-        }
+
+        // Initialize other users
+        const userMap = new Map();
+        message.payload.users.forEach((user: any) => {
+          userMap.set(user.userId, user);
+        });
+        setUsers(userMap);
         break;
-      case 'user-joined':
+      }
+
+      case 'user-joined': {
+        // Another user joined
         setUsers(prev => {
           const newUsers = new Map(prev);
           newUsers.set(message.payload.userId, {
@@ -90,41 +100,49 @@ const Game = () => {
           return newUsers;
         });
         break;
-      case 'movement':
+      }
+
+      case 'movement': {
+        // Always set the user, even if we haven't seen them before
         setUsers(prev => {
           const newUsers = new Map(prev);
-          const user = newUsers.get(message.payload.userId);
-          if (user) {
-            user.x = message.payload.x;
-            user.y = message.payload.y;
-            newUsers.set(message.payload.userId, user);
-          }
+          newUsers.set(message.payload.userId, {
+            x: message.payload.x,
+            y: message.payload.y,
+            userId: message.payload.userId
+          });
           return newUsers;
         });
         break;
-      case 'movement-rejected':
+      }
+
+      case 'movement-rejected': {
+        // Movement was invalid; reset our position
         setCurrentUser((prev: any) => ({
           ...prev,
           x: message.payload.x,
           y: message.payload.y
         }));
         break;
-      case 'user-left':
+      }
+
+      case 'user-left': {
         setUsers(prev => {
           const newUsers = new Map(prev);
           newUsers.delete(message.payload.userId);
           return newUsers;
         });
         break;
+      }
+
       default:
         console.warn("Unknown message type:", message);
     }
   };
 
-  // Movement handler: only send if connection is open.
+  // Movement handler: only send if connected
   const handleMove = (newX: any, newY: any) => {
     if (!currentUser || !isConnected) return;
-    // Using the helper function ensures we only send if ws.readyState === OPEN.
     sendMessage({
       type: 'move',
       payload: {
@@ -142,6 +160,7 @@ const Game = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Clear previous frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw grid
@@ -159,7 +178,7 @@ const Game = () => {
       ctx.stroke();
     }
 
-    // Draw current user
+    // Draw our own user
     if (currentUser && currentUser.x !== undefined) {
       ctx.beginPath();
       ctx.fillStyle = '#FF6B6B';
@@ -185,7 +204,7 @@ const Game = () => {
     });
   }, [currentUser, users]);
 
-  // Handle keyboard input
+  // Keyboard input
   const handleKeyDown = (e: any) => {
     if (!currentUser || !isConnected) return;
     const { x, y } = currentUser;

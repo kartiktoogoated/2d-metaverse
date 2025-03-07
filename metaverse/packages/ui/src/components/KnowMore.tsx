@@ -923,7 +923,7 @@ const KnowMore: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="/blog"
                     className="text-cyan-400 hover:text-cyan-300 transition-colors"
                   >
                     Blog
