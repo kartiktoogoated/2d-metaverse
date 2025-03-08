@@ -7,7 +7,6 @@ A lightweight 2D metaverse application built for seamless communication between 
 The 2D Metaverse app provides a simple yet engaging platform where users can:
 - Communicate in real-time.
 - Explore a visually appealing 2D virtual world.
-- Personalize their experience with customizable avatars and interactive elements.
 
 ## Features
 
@@ -16,14 +15,6 @@ The 2D Metaverse app provides a simple yet engaging platform where users can:
 - **User-Friendly Interface:** An intuitive design that makes joining and interacting effortless.
 - **Customizable Avatars:** Personalize your digital presence within the metaverse.
 - **Optimized Performance:** A lightweight architecture ensuring smooth user experiences.
-
-## Technologies Used
-
-- **HTML5, CSS3, and JavaScript:** Core technologies for building the user interface and interactions.
-- **WebSockets:** For real-time, bi-directional communication between clients.
-- **Canvas API / SVG:** Utilized for rendering dynamic 2D graphics.
-- **Additional Libraries/Frameworks:** 
-  - *(e.g., React, Node.js, or any other tools you have used)*
 
 ## Getting Started
 
