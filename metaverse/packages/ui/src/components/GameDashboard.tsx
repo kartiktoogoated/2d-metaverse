@@ -18,6 +18,8 @@ import {
   X,
 } from "lucide-react";
 import Chatbot from "./ChatBot"; // adjust the path to your Chatbot.tsx file
+import { AvatarManager } from "./AvatarManager";
+import { ElementManager } from "./ElementManager";
 
 interface PlayerStats {
   rank: number;
@@ -276,7 +278,7 @@ const GameDashboard: React.FC = () => {
 
         {/* Grid Layout */}
         <div className="grid grid-cols-12 gap-8">
-          {/* Player Stats */}
+          {/* Player Stats + Achievements (Left Column) */}
           <div className="col-span-3 space-y-6">
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <h2 className="text-xl text-cyan-300 mb-6">Player Stats</h2>
@@ -330,11 +332,12 @@ const GameDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Your Space */}
-          <div className="col-span-6">
+          {/* Middle Column: Your Space + AvatarManager + ElementManager */}
+          <div className="col-span-6 space-y-6">
+            {/* Your Space */}
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl text-cyan-300">Your space</h2>
+                <h2 className="text-xl text-cyan-300">Your Space</h2>
                 <button
                   onClick={() => setShowCreateSpace(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
@@ -366,7 +369,7 @@ const GameDashboard: React.FC = () => {
                       className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300"
                     >
                       <div
-                        className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300 relative"
+                        className="relative rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300 group cursor-pointer"
                         onClick={() => handleOpenJoinForm()}
                       >
                         <img
@@ -412,9 +415,15 @@ const GameDashboard: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Avatar Manager */}
+            <AvatarManager />
+
+            {/* Element Manager */}
+            <ElementManager />
           </div>
 
-          {/* Leaderboard */}
+          {/* Leaderboard (Right Column) */}
           <div className="col-span-3">
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <h2 className="text-xl text-cyan-300 mb-6">Top Players</h2>
