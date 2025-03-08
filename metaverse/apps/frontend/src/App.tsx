@@ -14,7 +14,8 @@ import GameDashboard from "@repo/ui/components/GameDashboard";
 import KnowMore from "@repo/ui/components/KnowMore";
 import Docs from "@repo/ui/components/Docs";
 import Game from "@repo/ui/components/Game";
-import Blog from "@repo/ui/components/Blog"
+import Blog from "@repo/ui/components/Blog";
+import ElementManager from "@repo/ui/components/ElementManager";
 import PrivateRoute from "./PrivateRoute";
 
 function HomePage() {
@@ -232,6 +233,7 @@ function App() {
         <Route path="/auth" element={<AuthForm />} />
         <Route path="/knowmore" element={<KnowMore />} />
         <Route path="/docs" element={<Docs />} />
+        <Route path="/create" element={<ElementManager />} />
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
