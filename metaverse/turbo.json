@@ -4,13 +4,16 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "inputs": ["$TURBO_DEFAULT$", "packages/ui/.env*"],
       "outputs": [
         "dist/**",
         "apps/ws/dist/**",
         "apps/http/dist/**",
         "apps/frontend/dist/**",
         "!dist/cache/**"
+      ],
+      "env": [
+        "VITE_API_BASE_URL"
       ]
     },
     "lint": {
