@@ -9,6 +9,9 @@ interface Avatar {
   name: string;
 }
 
+// Use Vite's environment variable (make sure your .env has VITE_API_BASE_URL)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const AvatarManager: React.FC = () => {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [showAddAvatar, setShowAddAvatar] = useState(false);
@@ -16,9 +19,6 @@ export const AvatarManager: React.FC = () => {
     name: '',
     image_url: ''
   });
-
-  // Base URL for your API server
-  const API_BASE_URL = 'http://18.215.159.145:3002';
 
   useEffect(() => {
     fetchAvatars();
@@ -33,7 +33,6 @@ export const AvatarManager: React.FC = () => {
         throw new Error('Error fetching avatars');
       }
       const data = await response.json();
-      // Transform backend's avatar objects to match our interface
       const avatarsTransformed = data.avatars.map((x: any) => ({
         id: x.id,
         image_url: x.imageUrl,
@@ -48,14 +47,13 @@ export const AvatarManager: React.FC = () => {
   const handleAddAvatar = async () => {
     try {
       if (!newAvatar.name || !newAvatar.image_url) return;
-  
-      // Retrieve the token from localStorage
+
       const token = localStorage.getItem('token');
       if (!token) {
         console.error('No token found. Make sure you are logged in as an admin.');
         return;
       }
-  
+
       const response = await fetch(`${API_BASE_URL}/api/v1/admin/avatar`, {
         method: 'POST',
         headers: {
@@ -68,12 +66,12 @@ export const AvatarManager: React.FC = () => {
           imageUrl: newAvatar.image_url,
         }),
       });
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error adding avatar: ${errorText}`);
       }
-  
+
       setShowAddAvatar(false);
       setNewAvatar({ name: '', image_url: '' });
       fetchAvatars();
@@ -114,7 +112,6 @@ export const AvatarManager: React.FC = () => {
         ))}
       </div>
 
-      {/* Add Avatar Modal */}
       {showAddAvatar && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-8">
           <motion.div
@@ -173,3 +170,5 @@ export const AvatarManager: React.FC = () => {
     </div>
   );
 };
+
+export default AvatarManager;
