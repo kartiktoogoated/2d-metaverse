@@ -1,27 +1,56 @@
+// App.tsx
+import {
+  Suspense,
+  lazy,
+  useMemo
+} from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useNavigate,
+  useNavigate
 } from "react-router-dom";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import AuthForm from "./AuthForm";
-import Features from "@repo/ui/components/Features.js";
-import Footer from "@repo/ui/components/Footer.js";
-import TechSpecs from "@repo/ui/components/TechSpecs.js";
-import Navbar from "@repo/ui/components/Navbar.js";
-import GameDashboard from "@repo/ui/components/GameDashboard";
-import KnowMore from "@repo/ui/components/KnowMore";
-import Docs from "@repo/ui/components/Docs";
-import Game from "@repo/ui/components/Game";
-import Blog from "@repo/ui/components/Blog";
-import ElementManager from "@repo/ui/components/ElementManager";
-import PrivateRoute from "./PrivateRoute";
 
+// Direct imports for smaller or critical components
+import AuthForm from "./AuthForm";
+import ScrambleOnHover from "./ScrambleOnHover";
+import PrivateRoute from "./PrivateRoute";
+import Navbar from "@repo/ui/components/Navbar.js"; // or wherever your Navbar is stored
+
+// 1. Lazy-load heavier components so they don't bloat the main bundle
+const Features = lazy(() => import("@repo/ui/components/Features.js"));
+const TechSpecs = lazy(() => import("@repo/ui/components/TechSpecs.js"));
+const Footer = lazy(() => import("@repo/ui/components/Footer.js"));
+
+// 2. Lazy-load your route-based components as well
+const KnowMore = lazy(() => import("@repo/ui/components/KnowMore"));
+const Docs = lazy(() => import("@repo/ui/components/Docs"));
+const ElementManager = lazy(() => import("@repo/ui/components/ElementManager"));
+const Blog = lazy(() => import("@repo/ui/components/Blog"));
+const GameDashboard = lazy(() => import("@repo/ui/components/GameDashboard"));
+const Game = lazy(() => import("@repo/ui/components/Game"));
+
+// Your HomePage is the landing/hero page
 function HomePage() {
   const navigate = useNavigate();
-  // Reduced y transform range to minimize the upward shift.
-  const y = useSpring(useTransform(useScroll().scrollYProgress, [0, 1], [0, -20]));
+
+  // 3. Animate the background grid with framer-motion
+  const scrollData = useScroll();
+  const yRange = useTransform(scrollData.scrollYProgress, [0, 1], [0, -20]);
+  // Use a spring for smoother movement
+  const y = useSpring(yRange, { stiffness: 50, damping: 20 });
+
+  // 4. Memoize random particle positions so they don't change every render
+  const particles = useMemo(() => {
+    return Array.from({ length: 10 }, () => ({
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      xOffset: Math.random() * 20 - 10,
+      duration: 3 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }));
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-cyan-100">
@@ -30,16 +59,17 @@ function HomePage() {
       {/* Dynamic Background */}
       <div className="fixed inset-0 z-0">
         {/* Animated Grid */}
-        <motion.div 
+        <motion.div
           className="absolute inset-0"
           style={{
-            backgroundImage: "linear-gradient(to right, rgba(34, 211, 238, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(34, 211, 238, 0.05) 1px, transparent 1px)",
+            backgroundImage:
+              "linear-gradient(to right, rgba(34, 211, 238, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(34, 211, 238, 0.05) 1px, transparent 1px)",
             backgroundSize: "40px 40px",
-            y, // Subtle parallax effect
+            y,
           }}
         />
 
-        {/* Animated Gradients */}
+        {/* Animated Radial Gradients */}
         <motion.div
           className="absolute top-0 left-0 w-full h-full"
           animate={{
@@ -60,23 +90,23 @@ function HomePage() {
 
         {/* Floating Particles */}
         <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
+          {particles.map((p, i) => (
             <motion.div
               key={i}
               className="absolute w-2 h-2 bg-cyan-500/20 rounded-full"
               style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
+                top: `${p.top}%`,
+                left: `${p.left}%`,
               }}
               animate={{
                 y: [0, -30, 0],
-                x: [0, Math.random() * 20 - 10, 0],
+                x: [0, p.xOffset, 0],
                 opacity: [0.2, 0.5, 0.2],
               }}
               transition={{
-                duration: 3 + Math.random() * 2,
+                duration: p.duration,
                 repeat: Infinity,
-                delay: Math.random() * 2,
+                delay: p.delay,
               }}
             />
           ))}
@@ -111,13 +141,13 @@ function HomePage() {
       {/* Main Content */}
       <div className="relative min-h-screen pt-16">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <motion.div 
+          <motion.div
             className="text-center"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <motion.h1 
+            <motion.h1
               className="text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400 font-extrabold"
               animate={{
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
@@ -148,7 +178,7 @@ function HomePage() {
                 "BOOTING UP DIGITAL REALM_",
                 "SYNCHRONIZING PLAYERS_",
                 "ENTERING VIRTUAL WORLD_",
-              ].map((text, i) => (
+              ].map((line, i) => (
                 <motion.p
                   key={i}
                   className="text-2xl md:text-3xl text-cyan-300 font-light"
@@ -157,7 +187,7 @@ function HomePage() {
                     visible: { opacity: 1, x: 0 },
                   }}
                 >
-                  &gt; {text}
+                  <ScrambleOnHover text={line} speed={50} />
                 </motion.p>
               ))}
             </motion.div>
@@ -179,14 +209,15 @@ function HomePage() {
           </motion.div>
 
           {/* Avatar Preview */}
-          <motion.div 
+          <motion.div
             className="mt-32 grid grid-cols-3 md:grid-cols-6 gap-8 max-w-4xl mx-auto"
             initial="hidden"
             animate="visible"
             variants={{
-              hidden: { opacity: 0 },
+              hidden: { opacity: 0, y: 20 },
               visible: {
                 opacity: 1,
+                y: 0,
                 transition: { staggerChildren: 0.1 },
               },
             }}
@@ -217,31 +248,43 @@ function HomePage() {
         </div>
       </div>
 
-      <Features />
-      <TechSpecs />
-      <Footer />
+      {/* Lazy-load heavier sections after the hero */}
+      <Suspense fallback={<div className="text-cyan-200 p-8">Loading Features...</div>}>
+        <Features />
+      </Suspense>
+
+      <Suspense fallback={<div className="text-cyan-200 p-8">Loading TechSpecs...</div>}>
+        <TechSpecs />
+      </Suspense>
+
+      <Suspense fallback={<div className="text-cyan-200 p-8">Loading Footer...</div>}>
+        <Footer />
+      </Suspense>
     </div>
   );
 }
 
+// The main App component sets up routing and code-split routes
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/auth" element={<AuthForm />} />
-        <Route path="/knowmore" element={<KnowMore />} />
-        <Route path="/docs" element={<Docs />} />
-        <Route path="/create" element={<ElementManager />} />
+      <Suspense fallback={<div className="text-cyan-200 p-8">Loading...</div>}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/auth" element={<AuthForm />} />
+          <Route path="/knowmore" element={<KnowMore />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/create" element={<ElementManager />} />
 
-        {/* Protected Routes */}
-        <Route element={<PrivateRoute />}>
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/dashboard" element={<GameDashboard />} />
-          <Route path="/game" element={<Game />} />
-        </Route>
-      </Routes>
+          {/* Protected Routes */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/dashboard" element={<GameDashboard />} />
+            <Route path="/game" element={<Game />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
