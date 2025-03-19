@@ -20,6 +20,8 @@
     "esbuild": "^0.24.0",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
+    "livekit-client": "^2.9.8",
+    "livekit-server-sdk": "^2.10.2",
     "typescript": "^5.6.3",
     "zod": "^3.23.8"
   },
