@@ -5,11 +5,10 @@ import { corsMiddleware } from "./middleware/cors";
 import 'dotenv/config';
 
 const app = express();
-
 app.use(corsMiddleware);
 app.use(express.json());
 
-app.use("/api/routes/v1", router);  // ✅ This ensures /api/v1/livekit is accessible
+app.use("/api/v1", router);  // ✅ This ensures /api/v1/livekit is accessible
 app.use("/api/v1/chatbot", chatbotRouter);
 
 console.log("Registered Routes:");

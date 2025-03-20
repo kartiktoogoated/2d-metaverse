@@ -24,32 +24,27 @@ livekitRouter.use(express.json()); // Required for JSON payloads
 /**
  * Generate a LiveKit token for a user to join a room
  */
-livekitRouter.get('/getToken', userMiddleware, async (req: express.Request, res: express.Response): Promise<void> => {
+livekitRouter.get('/getToken', async (req, res) => {
     try {
-      const { spaceId } = req.query;
-      const userId = (req as any).userId; // Assuming `userMiddleware` sets `req.userId`
-  
-      if (!spaceId) {
-        res.status(400).json({ message: "Missing spaceId parameter" });
-        return;
-      }
-  
-      const at = new AccessToken(LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!, {
-        identity: userId,
-        ttl: '10m',
-      });
-  
-      at.addGrant({ roomJoin: true, room: spaceId as string });
-  
-      const token = at.toJwt();
-  
-      res.json({ token }); // ✅ Correct way to send response
+        const { spaceId } = req.query;
+        const userId = "testUser"; // Hardcoded for testing
+        if (!spaceId) {
+            res.status(400).json({ message: "Missing spaceId parameter" });
+            return;
+        }
+        const at = new AccessToken(LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!, {
+            identity: userId,
+            ttl: '10m',
+        });
+        at.addGrant({ roomJoin: true, room: spaceId as string });
+        const token = at.toJwt();
+        res.json({ token });
     } catch (error) {
-      console.error("Error generating LiveKit token:", error);
-      res.status(500).json({ message: "Error generating token" });
+        console.error("Error generating LiveKit token:", error);
+        res.status(500).json({ message: "Error generating token" });
     }
-  });
-  
+});
+
       
 /**
  * Create a new LiveKit Room
