@@ -12,6 +12,7 @@ app.use(express.json());
 app.use("/api/v1", router);  // ✅ This ensures /api/v1/livekit is accessible
 app.use("/api/v1/chatbot", chatbotRouter);
 
+console.log("Registered Routes:");
 app._router.stack.forEach((r: any) => {
   if (r.route && r.route.path) {
     console.log(`Route found: ${r.route.path}`);
@@ -19,6 +20,7 @@ app._router.stack.forEach((r: any) => {
 });
 
 
+export {app};
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on AWS at http://18.215.159.145:${PORT}`);
