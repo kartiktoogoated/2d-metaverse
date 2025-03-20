@@ -112,6 +112,10 @@ router.get("/avatars", async (req, res) => {
   });
 });
 
+router.get("/test", async (req,res)=>{
+  console.log("hello")
+})
+
 // NEW: LiveKit token generation endpoint
 // This endpoint expects a query parameter "spaceId" and a JWT in the Authorization header.
 router.get("/livekit-token", async (req: Request, res: Response): Promise<void> => {
