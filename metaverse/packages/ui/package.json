@@ -25,6 +25,7 @@
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.4.10",
+    "livekit-client": "^2.9.8",
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

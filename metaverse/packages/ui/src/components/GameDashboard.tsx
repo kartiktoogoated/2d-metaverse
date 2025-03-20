@@ -1,3 +1,4 @@
+// ... other imports
 import React, { useEffect, useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -55,7 +56,7 @@ const GameDashboard: React.FC = () => {
 
   // ===== Join Space Form State =====
   const [showJoinForm, setShowJoinForm] = useState(false);
-  const [joinToken, setJoinToken] = useState("");
+  // Removed joinToken since token is not needed from user input.
   const [joinSpaceId, setJoinSpaceId] = useState("");
 
   useEffect(() => {
@@ -180,15 +181,16 @@ const GameDashboard: React.FC = () => {
     setShowJoinForm(true);
   };
 
-  // Handle join form submission
+  // Handle join form submission (only Space ID needed)
   const handleJoinSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!joinToken || !joinSpaceId) {
-      alert("Please enter both Token and Space ID");
+    if (!joinSpaceId) {
+      alert("Please enter a Space ID");
       return;
     }
-    // Navigate to /game with the provided token and spaceId as query parameters
-    navigate(`/game?spaceId=${joinSpaceId}&token=${joinToken}`);
+    // Navigate to /game with the provided spaceId as a query parameter.
+    // The token will be managed automatically (e.g., via local storage or backend).
+    navigate(`/game?spaceId=${joinSpaceId}`);
     setShowJoinForm(false);
   };
 
@@ -586,16 +588,6 @@ const GameDashboard: React.FC = () => {
             </div>
             <form onSubmit={handleJoinSubmit} className="space-y-4">
               <div>
-                <label className="block text-cyan-400 mb-2">Token</label>
-                <input
-                  type="text"
-                  value={joinToken}
-                  onChange={(e) => setJoinToken(e.target.value)}
-                  className="w-full px-4 py-2 bg-black/50 border border-cyan-700/50 text-cyan-100 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
-                  placeholder="Enter your token"
-                />
-              </div>
-              <div>
                 <label className="block text-cyan-400 mb-2">Space ID</label>
                 <input
                   type="text"
@@ -603,6 +595,7 @@ const GameDashboard: React.FC = () => {
                   onChange={(e) => setJoinSpaceId(e.target.value)}
                   className="w-full px-4 py-2 bg-black/50 border border-cyan-700/50 text-cyan-100 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                   placeholder="Enter the space ID"
+                  required
                 />
               </div>
               <div className="flex justify-end gap-4">
