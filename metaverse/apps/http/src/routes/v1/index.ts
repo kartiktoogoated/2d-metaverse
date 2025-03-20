@@ -112,8 +112,8 @@ router.get("/avatars", async (req, res) => {
   });
 });
 
-// NEW: LiveKit token generation endpoint.
-// This endpoint expects a query parameter "spaceId" and the JWT in the Authorization header
+// NEW: LiveKit token generation endpoint
+// This endpoint expects a query parameter "spaceId" and a JWT in the Authorization header.
 router.get("/livekit-token", async (req: Request, res: Response): Promise<void> => {
   const { spaceId } = req.query;
   if (!spaceId) {
@@ -156,7 +156,6 @@ router.get("/livekit-token", async (req: Request, res: Response): Promise<void> 
     res.status(401).json({ message: "Invalid token" });
   }
 });
-
 
 router.use("/user", userRouter);
 router.use("/space", spaceRouter);
