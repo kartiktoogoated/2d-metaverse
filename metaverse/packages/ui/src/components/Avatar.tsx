@@ -19,8 +19,7 @@ const FRAME_INTERVAL = 120;
 
 function Avatar({ x, y, isMoving, direction }: AvatarProps) {
   const [imagesLoaded, setImagesLoaded] = useState(false);
-
-  // Preload sprite sheets on mount
+  // Preload sprite sheets
   useEffect(() => {
     const runImg = new Image();
     const idleImg = new Image();
