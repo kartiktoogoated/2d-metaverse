@@ -29,26 +29,33 @@ const Chatbot: React.FC<ChatbotProps> = ({ show, onClose }) => {
     setIsLoading(true);
 
     try {
-        const response = await fetch("http://18.215.159.145:3002/api/v1/chatbot/run", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              input: inputValue,
-              chatbot_name: "metaverse",
-              username: "kartiktoogoated",
-              conversation_id: null,
-            }),
-          });          
+      const response = await fetch(
+        "http://18.215.159.145:3002/api/v1/chatbot/run",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            input: inputValue,
+            chatbot_name: "metaverse",
+            username: "kartiktoogoated",
+            conversation_id: null,
+          }),
+        }
+      );
+      // Suppose you do something like:
       const data = await response.json();
-      const botReply = data.reply || "No response received.";
+
+      // Then:
+      const botReply = data.output || "No response received.";
+
       setMessages((prev) => [...prev, { sender: "bot", text: botReply }]);
     } catch (error) {
       console.error("Error fetching chatbot response:", error);
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "Error: unable to fetch response." }
+        { sender: "bot", text: "Error: unable to fetch response." },
       ]);
     } finally {
       setIsLoading(false);
@@ -67,17 +74,25 @@ const Chatbot: React.FC<ChatbotProps> = ({ show, onClose }) => {
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl text-cyan-300">AI Assistant</h3>
-          <button onClick={onClose} className="text-cyan-500 hover:text-cyan-300 transition-colors">
+          <button
+            onClick={onClose}
+            className="text-cyan-500 hover:text-cyan-300 transition-colors"
+          >
             <X size={24} />
           </button>
         </div>
         {/* Chat Messages */}
         <div className="flex flex-col space-y-2 max-h-80 overflow-y-auto mb-4">
           {messages.map((msg, idx) => (
-            <div key={idx} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              key={idx}
+              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+            >
               <div
                 className={`p-3 rounded-lg max-w-xs ${
-                  msg.sender === "user" ? "bg-cyan-700 text-white" : "bg-cyan-900/50 text-cyan-100"
+                  msg.sender === "user"
+                    ? "bg-cyan-700 text-white"
+                    : "bg-cyan-900/50 text-cyan-100"
                 }`}
               >
                 {msg.text}

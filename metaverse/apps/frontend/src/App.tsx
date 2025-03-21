@@ -194,7 +194,7 @@ function HomePage() {
 
             <motion.button
               onClick={() => navigate("/auth")}
-              className="mt-12 px-8 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 text-white text-2xl rounded-lg transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 relative group overflow-hidden"
+              className="mt-12 px-8 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 text-white text-2xl rounded-full transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/25 relative group overflow-hidden"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
