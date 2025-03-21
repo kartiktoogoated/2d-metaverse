@@ -93,3 +93,13 @@
     transform: translate(0, 0);
   }
 }
+
+@keyframes runAnim {
+  from { background-position: 0 0; }
+  to { background-position: -512px 0; } /* 8 frames * 64px */
+}
+
+@keyframes idleAnim {
+  from { background-position: 0 0; }
+  to { background-position: -448px 0; } /* 7 frames * 64px */
+}
