@@ -24,13 +24,13 @@ const createToken = async (spaceId: string, identity: string): Promise<string> =
     ttl: 3600,
   });
 
-  // Grant roomJoin plus publishing & subscribing privileges using spaceId as the room name
+  // Grant roomJoin plus publishing & subscribing privileges using the spaceId as room name
   at.addGrant({
     roomJoin: true,
     room: spaceId,
     canPublish: true,
     canSubscribe: true,
-    // canPublishData: true, // Enable if you need data channels
+    // canPublishData: true, // Uncomment if you need data channels
   });
 
   return await at.toJwt();
@@ -38,20 +38,20 @@ const createToken = async (spaceId: string, identity: string): Promise<string> =
 
 /**
  * GET route:
- *   /getToken?spaceId=someSpaceId&identity=someUsername
+ *   /api/v1/livekit-token?spaceId=someSpaceId&identity=someUsername
  * returns JSON: { "token": "<JWT>" }
  */
-livekitRouter.get('/getToken', async (req: Request, res: Response) => {
+livekitRouter.get('/', async (req: Request, res: Response) => {
   try {
     const spaceId = req.query.spaceId as string;
     if (!spaceId) {
       res.status(400).json({ error: 'spaceId is required' });
       return;
     }
+    // Default identity can be replaced by a username from your authentication flow
     const identity = (req.query.identity as string) || 'quickstart-username';
 
     const token = await createToken(spaceId, identity);
-    // Return JSON so that the frontend can do await res.json()
     res.json({ token });
   } catch (error) {
     console.error('Error generating token:', error);
