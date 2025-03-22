@@ -2,6 +2,15 @@ import { Router } from "express";
 import client from "@repo/db/client";
 import { userMiddleware } from "../../middleware/user";
 import { AddElementSchema, CreateElementSchema, CreateSpaceSchema, DeleteElementSchema } from "../../types";
+// Import RoomServiceClient for LiveKit room management
+import { RoomServiceClient } from "livekit-server-sdk";
+
+const LIVEKIT_HOST = process.env.LIVEKIT_HOST || 'https://metaverse-2d-0ex8lqub.livekit.cloud';
+const roomService = new RoomServiceClient(
+  LIVEKIT_HOST,
+  process.env.LIVEKIT_API_KEY!,
+  process.env.LIVEKIT_API_SECRET!
+);
 
 export const spaceRouter = Router();
 
@@ -14,8 +23,10 @@ spaceRouter.post("/", userMiddleware, async (req, res) => {
     return;
   }
 
+  let space;
+  // If no mapId is provided, create a space with custom dimensions
   if (!parsedData.data.mapId) {
-    const space = await client.space.create({
+    space = await client.space.create({
       data: {
         name: parsedData.data.name,
         width: parseInt(parsedData.data.dimensions.split("x")[0]),
@@ -23,10 +34,22 @@ spaceRouter.post("/", userMiddleware, async (req, res) => {
         creatorId: req.userId!
       }
     });
+    try {
+      // Create a LiveKit room with the space id as its name.
+      await roomService.createRoom({
+        name: space.id,
+        emptyTimeout: 600, // Room will close after 10 minutes of inactivity
+        maxParticipants: 10
+      });
+    } catch (error) {
+      console.error("Error creating LiveKit room for space:", error);
+      // Optionally handle the error
+    }
     res.json({ spaceId: space.id });
     return;
   }
   
+  // If a mapId is provided, load the map and create the space accordingly.
   const map = await client.map.findFirst({
     where: { id: parsedData.data.mapId },
     select: { mapElements: true, width: true, height: true }
@@ -37,7 +60,7 @@ spaceRouter.post("/", userMiddleware, async (req, res) => {
     return;
   }
   console.log("map.mapElements.length:", map.mapElements.length);
-  let space = await client.$transaction(async () => {
+  space = await client.$transaction(async () => {
     const space = await client.space.create({
       data: {
         name: parsedData.data.name,
@@ -46,7 +69,6 @@ spaceRouter.post("/", userMiddleware, async (req, res) => {
         creatorId: req.userId!,
       }
     });
-
     await client.spaceElements.createMany({
       data: map.mapElements.map((e: { elementId: any; x: any; y: any; }) => ({
         spaceId: space.id,
@@ -55,10 +77,19 @@ spaceRouter.post("/", userMiddleware, async (req, res) => {
         y: e.y!
       }))
     });
-
     return space;
   });
   console.log("space created");
+  try {
+    // Create a corresponding LiveKit room using the space id as its room name.
+    await roomService.createRoom({
+      name: space.id,
+      emptyTimeout: 600,
+      maxParticipants: 10
+    });
+  } catch (error) {
+    console.error("Error creating LiveKit room for space:", error);
+  }
   res.json({ spaceId: space.id });
 });
 
@@ -78,9 +109,7 @@ spaceRouter.delete("/element", userMiddleware, async (req, res) => {
     res.status(403).json({ message: "Unauthorized" });
     return;
   }
-  await client.spaceElements.delete({
-    where: { id: parsedData.data.id }
-  });
+  await client.spaceElements.delete({ where: { id: parsedData.data.id } });
   res.json({ message: "Element deleted" });
 });
 
@@ -124,10 +153,7 @@ spaceRouter.post("/element", userMiddleware, async (req, res) => {
     return;
   }
   const space = await client.space.findUnique({
-    where: {
-      id: req.body.spaceId,
-      creatorId: req.userId!
-    },
+    where: { id: req.body.spaceId, creatorId: req.userId! },
     select: { width: true, height: true }
   });
   if (req.body.x < 0 || req.body.y < 0 || req.body.x > space?.width! || req.body.y > space?.height!) {
@@ -152,9 +178,7 @@ spaceRouter.post("/element", userMiddleware, async (req, res) => {
 spaceRouter.get("/:spaceId", async (req, res) => {
   const space = await client.space.findUnique({
     where: { id: req.params.spaceId },
-    include: {
-      elements: { include: { element: true } }
-    }
+    include: { elements: { include: { element: true } } }
   });
   if (!space) {
     res.status(400).json({ message: "Space not found" });
