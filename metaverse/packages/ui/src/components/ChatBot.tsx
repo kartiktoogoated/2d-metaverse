@@ -30,7 +30,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ show, onClose }) => {
 
     try {
       const response = await fetch(
-        "http://172.31.93.125:3002/api/v1/chatbot/run",
+        "http://98.82.0.57:3002/api/v1/chatbot/run",
         {
           method: "POST",
           headers: {

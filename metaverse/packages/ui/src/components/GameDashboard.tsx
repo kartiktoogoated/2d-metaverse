@@ -85,7 +85,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch("http://172.31.93.125:3002/api/v1/space/all", {
+      const response = await fetch("http://98.82.0.57:3002/api/v1/space/all", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -108,7 +108,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch("http://172.31.93.125:3002/api/v1/space", {
+      const response = await fetch("http://98.82.0.57:3002/api/v1/space", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -151,7 +151,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch(`http://172.31.93.125:3002/api/v1/space/${id}`, {
+      const response = await fetch(`http://98.82.0.57:3002/api/v1/space/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

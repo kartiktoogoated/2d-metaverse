@@ -27,7 +27,7 @@ function VideoCard() {
     setLoading(true);
 
     const endpoint = isSignIn ? "/api/v1/signin" : "/api/v1/signup";
-    const apiUrl = `http://172.31.93.125:3002${endpoint}`;
+    const apiUrl = `http://98.82.0.57:3002${endpoint}`;
 
     if (!isSignIn && formData.password !== formData.confirmPassword) {
       setError("Passwords do not match!");
