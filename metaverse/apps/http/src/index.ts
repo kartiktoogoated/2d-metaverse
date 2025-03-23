@@ -22,5 +22,5 @@ app._router.stack.forEach((r: any) => {
 export {app};
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on AWS at http://18.215.159.145:${PORT}`);
+  console.log(`🚀 Server running on AWS at http://172.31.93.125:${PORT}`);
 });
