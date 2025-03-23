@@ -2,13 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Room,
-  RoomEvent,
-  RemoteTrack,
-  Track,
-  VideoPresets,
-} from 'livekit-client';
+import { Room, RoomEvent, RemoteTrack, Track, VideoPresets } from 'livekit-client';
 import { ArrowLeft, Users, Wifi, WifiOff, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Avatar from './Avatar';
@@ -37,7 +31,6 @@ function clampTileY(y: number) {
   return Math.min(Math.max(y, 0), maxTileY);
 }
 
-// Helper: clamp any number between min and max
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);
 }
@@ -59,21 +52,24 @@ const Game = () => {
   const [videoRoom, setVideoRoom] = useState<Room | null>(null);
   const [livekitToken, setLivekitToken] = useState('');
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [videoStarted, setVideoStarted] = useState(false);
 
-  const addNotification = (message: string) => {
-    setNotifications((prev) => [...prev, message]);
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n !== message));
-    }, 3000);
-  };
+  // Resume AudioContext on user interaction (helps satisfy autoplay policies)
+  useEffect(() => {
+    const resumeAudioContext = () => {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(() => console.log('AudioContext resumed'));
+        }
+      }
+    };
+    window.addEventListener('click', resumeAudioContext);
+    return () => window.removeEventListener('click', resumeAudioContext);
+  }, []);
 
-  const sendMessage = (message: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
-    }
-  };
-
-  // Set up websocket connection and join space
+  // Set up WebSocket and join the space using the spaceId from the URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const spaceId = urlParams.get('spaceId') || '';
@@ -85,7 +81,7 @@ const Game = () => {
       return;
     }
 
-    const ws = new WebSocket('ws://18.215.159.145:3001');
+    const ws = new WebSocket('ws://172.31.93.125:3001');
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -107,15 +103,15 @@ const Game = () => {
     return () => ws.close();
   }, []);
 
-  // Fetch LiveKit token from backend
+  // Fetch LiveKit token from backend using spaceId
   useEffect(() => {
     async function fetchToken() {
       if (!params.spaceId) return;
       try {
-        const res = await fetch(
-          `${API_BASE_URL}/api/v1/livekit-token?spaceId=${params.spaceId}`,
-          { credentials: 'include' }
-        );
+        // Make sure your backend mounts the LiveKit router at /api/v1/livekit-token
+        const res = await fetch(`${API_BASE_URL}/api/v1/livekit?spaceId=${params.spaceId}`, {
+          credentials: 'include'
+        });
         const data = await res.json();
         if (data.token) setLivekitToken(data.token);
       } catch (error) {
@@ -125,17 +121,15 @@ const Game = () => {
     fetchToken();
   }, [params.spaceId]);
 
-  // Join the LiveKit video room
+  // Join the LiveKit video room using the fetched token
   useEffect(() => {
     async function joinVideoRoom() {
       if (!livekitToken) return;
-
       const room = new Room({
         adaptiveStream: true,
         dynacast: true,
         videoCaptureDefaults: { resolution: VideoPresets.h720.resolution },
       });
-
       room.prepareConnection(LIVEKIT_URL, livekitToken);
 
       room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {
@@ -147,7 +141,6 @@ const Game = () => {
           remoteVideoRef.current.srcObject = (element as HTMLVideoElement).srcObject;
         }
       });
-
       room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => track.detach());
       room.on(RoomEvent.Disconnected, () => addNotification("Video chat disconnected"));
 
@@ -155,13 +148,7 @@ const Game = () => {
         await room.connect(LIVEKIT_URL, livekitToken);
         setVideoRoom(room);
         addNotification("Connected to video room");
-
-        await room.localParticipant.enableCameraAndMicrophone();
-        const cameraPub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (cameraPub?.track && localVideoRef.current) {
-          const element = cameraPub.track.attach();
-          localVideoRef.current.srcObject = (element as HTMLVideoElement).srcObject;
-        }
+        // Do not auto-enable camera/mic; wait for user gesture.
       } catch (error) {
         console.error("Error joining video room:", error);
       }
@@ -173,7 +160,38 @@ const Game = () => {
     };
   }, [livekitToken]);
 
-  // Handle messages from the WebSocket server
+  // User-triggered function to start video chat after a gesture.
+  const startVideoChat = async () => {
+    if (!videoRoom) return;
+    // Check if the browser supports getUserMedia
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Your browser does not support camera/microphone access.");
+      return;
+    }
+    try {
+      // Use LiveKit's recommended methods to enable camera and mic
+      await videoRoom.localParticipant.setCameraEnabled(true);
+      await videoRoom.localParticipant.setMicrophoneEnabled(true);
+      setVideoStarted(true);
+      addNotification("Video chat started");
+    } catch (error) {
+      console.error("Error starting video chat:", error);
+    }
+  };
+
+  const addNotification = (message: string) => {
+    setNotifications((prev) => [...prev, message]);
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n !== message));
+    }, 3000);
+  };
+
+  const sendMessage = (message: any) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message));
+    }
+  };
+
   const handleWebSocketMessage = (message: any) => {
     switch (message.type) {
       case 'space-joined': {
@@ -185,7 +203,6 @@ const Game = () => {
         };
         setCurrentUser(user);
         setPixelPos({ x: user.x * TILE_SIZE, y: user.y * TILE_SIZE });
-
         const userMap = new Map();
         message.payload.users.forEach((u: any) => {
           if (!u.userId || u.userId === "undefined") return;
@@ -218,11 +235,7 @@ const Game = () => {
         break;
       }
       case 'movement-rejected': {
-        setCurrentUser((prev: any) => ({
-          ...prev,
-          x: message.payload.x,
-          y: message.payload.y,
-        }));
+        setCurrentUser((prev: any) => ({ ...prev, x: message.payload.x, y: message.payload.y }));
         setPixelPos({ x: message.payload.x * TILE_SIZE, y: message.payload.y * TILE_SIZE });
         addNotification("Movement rejected");
         break;
@@ -239,10 +252,8 @@ const Game = () => {
     }
   };
 
-  // Draw map features on the canvas
   const drawMapFeature = (ctx: CanvasRenderingContext2D, feature: typeof MAP_FEATURES[0]) => {
     ctx.save();
-
     switch (feature.type) {
       case 'forest':
         ctx.fillStyle = '#2d5a27';
@@ -261,13 +272,10 @@ const Game = () => {
         ctx.strokeStyle = '#ffc107';
         break;
     }
-
     ctx.beginPath();
     ctx.roundRect(feature.x, feature.y, feature.width, feature.height, 20);
     ctx.fill();
     ctx.stroke();
-
-    // Add texture patterns
     ctx.globalAlpha = 0.1;
     for (let i = 0; i < feature.width; i += 20) {
       for (let j = 0; j < feature.height; j += 20) {
@@ -293,28 +301,19 @@ const Game = () => {
         }
       }
     }
-
     ctx.restore();
   };
 
-  // Draw the canvas background, grid, and features
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw background
-    ctx.fillStyle = '#a5d6a7'; // Light green base
+    ctx.fillStyle = '#a5d6a7';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw grid
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 1;
-
     for (let i = 0; i < canvas.width; i += TILE_SIZE) {
       ctx.beginPath();
       ctx.moveTo(i, 0);
@@ -327,54 +326,31 @@ const Game = () => {
       ctx.lineTo(canvas.width, i);
       ctx.stroke();
     }
-
-    // Draw map features
     MAP_FEATURES.forEach((feature) => drawMapFeature(ctx, feature));
   }, [currentUser, users]);
 
-  // Handle keyboard input to move the player avatar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!currentUser || !isConnected || isTweening) return;
-
       let dx = 0;
       let dy = 0;
-
       switch (e.key) {
-        case 'ArrowUp':
-          dy = -1;
-          break;
-        case 'ArrowDown':
-          dy = 1;
-          break;
-        case 'ArrowLeft':
-          dx = -1;
-          setDirection("left");
-          break;
-        case 'ArrowRight':
-          dx = 1;
-          setDirection("right");
-          break;
-        default:
-          return;
+        case 'ArrowUp': dy = -1; break;
+        case 'ArrowDown': dy = 1; break;
+        case 'ArrowLeft': dx = -1; setDirection("left"); break;
+        case 'ArrowRight': dx = 1; setDirection("right"); break;
+        default: return;
       }
-
       setIsMoving(true);
       const newTileX = clampTileX(currentUser.x + dx);
       const newTileY = clampTileY(currentUser.y + dy);
-
       if (newTileX === currentUser.x && newTileY === currentUser.y) {
         setIsMoving(false);
         return;
       }
-
       tweenToTile(newTileX, newTileY);
     };
-
-    const handleKeyUp = () => {
-      if (!isTweening) setIsMoving(false);
-    };
-
+    const handleKeyUp = () => { if (!isTweening) setIsMoving(false); };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
@@ -383,68 +359,49 @@ const Game = () => {
     };
   }, [currentUser, isConnected, isTweening]);
 
-  // Tween animation for moving the player avatar
   const tweenToTile = (targetTileX: number, targetTileY: number) => {
     setIsTweening(true);
-
     const startX = pixelPos.x;
     const startY = pixelPos.y;
     const endX = targetTileX * TILE_SIZE;
     const endY = targetTileY * TILE_SIZE;
     const duration = 200;
     let startTime: number | null = null;
-
     function animate(timestamp: number) {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const t = Math.min(1, elapsed / duration);
-
       const newX = startX + (endX - startX) * t;
       const newY = startY + (endY - startY) * t;
       setPixelPos({ x: newX, y: newY });
-
       if (t < 1) {
         requestAnimationFrame(animate);
       } else {
         setIsTweening(false);
         setIsMoving(false);
-        setCurrentUser((prev: any) => ({
-          ...prev,
-          x: targetTileX,
-          y: targetTileY,
-        }));
-
+        setCurrentUser((prev: any) => ({ ...prev, x: targetTileX, y: targetTileY }));
         if (currentUser) {
           sendMessage({
             type: 'move',
-            payload: {
-              x: targetTileX,
-              y: targetTileY,
-              userId: currentUser.userId,
-            },
+            payload: { x: targetTileX, y: targetTileY, userId: currentUser.userId },
           });
         }
       }
     }
-
     requestAnimationFrame(animate);
   };
 
-  // Calculate camera offset so the current user is near center
   const [viewportWidth, viewportHeight] = [window.innerWidth, window.innerHeight];
   const halfW = viewportWidth / 2;
   const halfH = viewportHeight / 2;
-
   let cameraX = pixelPos.x - halfW;
   let cameraY = pixelPos.y - halfH;
-
-  // Clamp so we never scroll beyond the game area
   cameraX = clamp(cameraX, 0, CANVAS_WIDTH - viewportWidth);
   cameraY = clamp(cameraY, 0, CANVAS_HEIGHT - viewportHeight);
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
-      {/* Map container with camera transform */}
+      {/* Game Canvas & Avatars */}
       <div className="absolute inset-0 overflow-hidden">
         <div
           style={{
@@ -462,13 +419,7 @@ const Game = () => {
             }}
             className="bg-gradient-to-br from-emerald-900/20 to-cyan-900/20"
           >
-            <canvas
-              ref={canvasRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              className="absolute inset-0"
-            />
-            {/* Avatars Layer */}
+            <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="absolute inset-0" />
             <div className="absolute inset-0">
               {currentUser && (
                 <Avatar
@@ -494,7 +445,6 @@ const Game = () => {
 
       {/* UI Overlay */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Top Bar */}
         <motion.div
           initial={{ y: -100 }}
           animate={{ y: 0 }}
@@ -507,35 +457,21 @@ const Game = () => {
             <ArrowLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
-
           <div className="flex items-center gap-4">
             <motion.div
-              animate={{
-                scale: isConnected ? [1, 1.2, 1] : 1,
-                transition: { repeat: Infinity, duration: 2 },
-              }}
+              animate={{ scale: isConnected ? [1, 1.2, 1] : 1, transition: { repeat: Infinity, duration: 2 } }}
               className="flex items-center gap-2 px-4 py-2 bg-cyan-950/50 backdrop-blur-sm rounded-lg"
             >
-              {isConnected ? (
-                <Wifi className="text-green-400" size={20} />
-              ) : (
-                <WifiOff className="text-red-400" size={20} />
-              )}
-              <span className="text-cyan-300">
-                {isConnected ? "Connected" : "Disconnected"}
-              </span>
+              {isConnected ? <Wifi className="text-green-400" size={20} /> : <WifiOff className="text-red-400" size={20} />}
+              <span className="text-cyan-300">{isConnected ? "Connected" : "Disconnected"}</span>
             </motion.div>
-
             <div className="flex items-center gap-2 px-4 py-2 bg-cyan-950/50 backdrop-blur-sm rounded-lg">
               <Users className="text-cyan-400" size={20} />
-              <span className="text-cyan-300">
-                {users.size + (currentUser ? 1 : 0)} Players
-              </span>
+              <span className="text-cyan-300">{users.size + (currentUser ? 1 : 0)} Players</span>
             </div>
           </div>
         </motion.div>
 
-        {/* Notifications */}
         <div className="absolute top-20 right-4 space-y-2">
           <AnimatePresence>
             {notifications.map((notification, index) => (
@@ -552,7 +488,7 @@ const Game = () => {
           </AnimatePresence>
         </div>
 
-        {/* Video Chat */}
+        {/* Video Chat Section */}
         <div className="absolute bottom-4 right-4 space-y-2 pointer-events-auto">
           <div className="bg-cyan-950/50 backdrop-blur-sm p-4 rounded-lg">
             <h2 className="text-lg font-semibold text-cyan-300 mb-2 flex items-center gap-2">
@@ -560,18 +496,17 @@ const Game = () => {
               Video Chat
             </h2>
             <div className="grid grid-cols-2 gap-2">
-              <video
-                ref={localVideoRef}
-                autoPlay
-                muted
-                className="w-32 h-24 rounded bg-black/50"
-              />
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                className="w-32 h-24 rounded bg-black/50"
-              />
+              <video ref={localVideoRef} autoPlay muted className="w-32 h-24 rounded bg-black/50" />
+              <video ref={remoteVideoRef} autoPlay className="w-32 h-24 rounded bg-black/50" />
             </div>
+            {!videoStarted && (
+              <button
+                onClick={startVideoChat}
+                className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
+              >
+                Start Video Chat
+              </button>
+            )}
           </div>
         </div>
       </div>

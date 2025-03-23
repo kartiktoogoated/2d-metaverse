@@ -1,4 +1,3 @@
-// ... other imports
 import React, { useEffect, useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,7 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import Chatbot from "./ChatBot"; // adjust the path to your Chatbot.tsx file
+import Chatbot from "./ChatBot"; // adjust the path as needed
 import { AvatarManager } from "./AvatarManager";
 import { ElementManager } from "./ElementManager";
 
@@ -31,8 +30,6 @@ interface PlayerStats {
 
 const GameDashboard: React.FC = () => {
   const navigate = useNavigate();
-
-  // ===== Spaces State =====
   const [spaces, setSpaces] = useState<
     {
       id: string;
@@ -50,24 +47,11 @@ const GameDashboard: React.FC = () => {
     mapId: "",
     difficulty: "Medium",
   });
-
-  // ===== Chatbot State =====
   const [showChatbot, setShowChatbot] = useState(false);
-
-  // ===== Join Space Form State =====
   const [showJoinForm, setShowJoinForm] = useState(false);
-  // Removed joinToken since token is not needed from user input.
   const [joinSpaceId, setJoinSpaceId] = useState("");
 
-  useEffect(() => {
-    const storedSpaces = sessionStorage.getItem("spaces");
-    if (storedSpaces) {
-      setSpaces(JSON.parse(storedSpaces));
-    } else {
-      fetchSpaces();
-    }
-  }, []);
-
+  // Dummy data for leaderboard and playerStats
   const leaderboard: PlayerStats[] = [
     { rank: 1, name: "CyberNinja", score: 15000, isOnline: true },
     { rank: 2, name: "PixelMaster", score: 14500, isOnline: false },
@@ -85,6 +69,15 @@ const GameDashboard: React.FC = () => {
     worlds: 8,
   };
 
+  useEffect(() => {
+    const storedSpaces = sessionStorage.getItem("spaces");
+    if (storedSpaces) {
+      setSpaces(JSON.parse(storedSpaces));
+    } else {
+      fetchSpaces();
+    }
+  }, []);
+
   const fetchSpaces = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -92,14 +85,13 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch("http://18.215.159.145:3002/api/v1/space/all", {
+      const response = await fetch("http://172.31.93.125:3002/api/v1/space/all", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
       });
-
       if (!response.ok) throw new Error("Failed to fetch spaces");
       const data = await response.json();
       setSpaces(data.spaces || []);
@@ -108,7 +100,6 @@ const GameDashboard: React.FC = () => {
     }
   };
 
-  // Handle space creation
   const handleCreateSpace = async () => {
     if (!newSpace.name.trim()) return;
     try {
@@ -117,7 +108,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch("http://18.215.159.145:3002/api/v1/space", {
+      const response = await fetch("http://172.31.93.125:3002/api/v1/space", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -160,7 +151,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch(`http://18.215.159.145:3002/api/v1/space/${id}`, {
+      const response = await fetch(`http://172.31.93.125:3002/api/v1/space/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -176,20 +167,17 @@ const GameDashboard: React.FC = () => {
     }
   };
 
-  // Open the join space modal
   const handleOpenJoinForm = () => {
     setShowJoinForm(true);
   };
 
-  // Handle join form submission (only Space ID needed)
   const handleJoinSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!joinSpaceId) {
       alert("Please enter a Space ID");
       return;
     }
-    // Navigate to /game with the provided spaceId as a query parameter.
-    // The token will be managed automatically (e.g., via local storage or backend).
+    // Navigate to Game view with the selected spaceId.
     navigate(`/game?spaceId=${joinSpaceId}`);
     setShowJoinForm(false);
   };
@@ -280,7 +268,7 @@ const GameDashboard: React.FC = () => {
 
         {/* Grid Layout */}
         <div className="grid grid-cols-12 gap-8">
-          {/* Player Stats + Achievements (Left Column) */}
+          {/* Left Column: Player Stats + Achievements */}
           <div className="col-span-3 space-y-6">
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <h2 className="text-xl text-cyan-300 mb-6">Player Stats</h2>
@@ -291,9 +279,7 @@ const GameDashboard: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-cyan-400">Achievements</span>
-                  <span className="text-cyan-300">
-                    {playerStats.achievements}
-                  </span>
+                  <span className="text-cyan-300">{playerStats.achievements}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-cyan-400">Playtime</span>
@@ -305,38 +291,29 @@ const GameDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Achievements */}
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
-              <h2 className="text-xl text-cyan-300 mb-6">
-                Recent Achievements
-              </h2>
+              <h2 className="text-xl text-cyan-300 mb-6">Recent Achievements</h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-4 p-3 bg-cyan-900/20 rounded-lg">
                   <Star className="w-5 h-5 text-yellow-400" />
                   <div>
                     <p className="text-cyan-300">World Master</p>
-                    <p className="text-sm text-cyan-400">
-                      Complete all challenges
-                    </p>
+                    <p className="text-sm text-cyan-400">Complete all challenges</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-3 bg-cyan-900/20 rounded-lg">
                   <Zap className="w-5 h-5 text-yellow-400" />
                   <div>
                     <p className="text-cyan-300">Speed Demon</p>
-                    <p className="text-sm text-cyan-400">
-                      Finish under 2 minutes
-                    </p>
+                    <p className="text-sm text-cyan-400">Finish under 2 minutes</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Middle Column: Your Space + AvatarManager + ElementManager */}
+          {/* Middle Column: Display Spaces, AvatarManager, and ElementManager */}
           <div className="col-span-6 space-y-6">
-            {/* Your Space */}
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl text-cyan-300">Your Space</h2>
@@ -352,9 +329,7 @@ const GameDashboard: React.FC = () => {
                 <div className="text-center py-12">
                   <Map className="w-16 h-16 mx-auto text-cyan-500/50 mb-4" />
                   <h3 className="text-xl text-cyan-300 mb-2">No space Yet</h3>
-                  <p className="text-cyan-400 mb-6">
-                    Create your first space to get started
-                  </p>
+                  <p className="text-cyan-400 mb-6">Create your first space to get started</p>
                   <button
                     onClick={() => setShowCreateSpace(true)}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
@@ -369,11 +344,9 @@ const GameDashboard: React.FC = () => {
                     <div
                       key={space.id}
                       className="group cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300"
+                      onClick={() => navigate(`/game?spaceId=${space.id}`)}
                     >
-                      <div
-                        className="relative rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300 group cursor-pointer"
-                        onClick={() => handleOpenJoinForm()}
-                      >
+                      <div className="relative rounded-xl overflow-hidden border-2 border-transparent hover:border-cyan-500/50 transition-all duration-300">
                         <img
                           src={
                             space.thumbnail ||
@@ -398,17 +371,13 @@ const GameDashboard: React.FC = () => {
                           </button>
                         </div>
                         <div className="absolute bottom-0 left-0 right-0 p-4">
-                          <h3 className="text-lg text-cyan-300 mb-1">
-                            {space.name}
-                          </h3>
+                          <h3 className="text-lg text-cyan-300 mb-1">{space.name}</h3>
                           <div className="flex justify-between text-sm">
                             <span className="text-cyan-400">
                               <Users className="w-4 h-4 inline mr-1" />
                               {space.players || 0}
                             </span>
-                            <span className="text-cyan-400">
-                              {space.difficulty || "Medium"}
-                            </span>
+                            <span className="text-cyan-400">{space.difficulty || "Medium"}</span>
                           </div>
                         </div>
                       </div>
@@ -425,7 +394,7 @@ const GameDashboard: React.FC = () => {
             <ElementManager />
           </div>
 
-          {/* Leaderboard (Right Column) */}
+          {/* Right Column: Leaderboard */}
           <div className="col-span-3">
             <div className="bg-cyan-950/30 rounded-2xl p-6 border border-cyan-500/20">
               <h2 className="text-xl text-cyan-300 mb-6">Top Players</h2>
@@ -446,25 +415,18 @@ const GameDashboard: React.FC = () => {
                           : "bg-cyan-800/20"
                       }`}
                     >
-                      {player.rank === 1 && (
+                      {player.rank === 1 ? (
                         <Crown className="w-4 h-4 text-yellow-400" />
-                      )}
-                      {player.rank > 1 && (
+                      ) : (
                         <span className="text-cyan-300">#{player.rank}</span>
                       )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-cyan-300">{player.name}</span>
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            player.isOnline ? "bg-green-400" : "bg-gray-400"
-                          }`}
-                        />
+                        <span className={`w-2 h-2 rounded-full ${player.isOnline ? "bg-green-400" : "bg-gray-400"}`} />
                       </div>
-                      <p className="text-sm text-cyan-400">
-                        {player.score.toLocaleString()} pts
-                      </p>
+                      <p className="text-sm text-cyan-400">{player.score.toLocaleString()} pts</p>
                     </div>
                   </div>
                 ))}
@@ -493,9 +455,7 @@ const GameDashboard: React.FC = () => {
                 <input
                   type="text"
                   value={newSpace.name}
-                  onChange={(e) =>
-                    setNewSpace({ ...newSpace, name: e.target.value })
-                  }
+                  onChange={(e) => setNewSpace({ ...newSpace, name: e.target.value })}
                   className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                   placeholder="Enter space name"
                   required
@@ -505,24 +465,18 @@ const GameDashboard: React.FC = () => {
                 <label className="block text-cyan-400 mb-2">Description</label>
                 <textarea
                   value={newSpace.description}
-                  onChange={(e) =>
-                    setNewSpace({ ...newSpace, description: e.target.value })
-                  }
+                  onChange={(e) => setNewSpace({ ...newSpace, description: e.target.value })}
                   className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 h-32"
                   placeholder="Enter a short description"
                   required
                 />
               </div>
               <div>
-                <label className="block text-cyan-400 mb-2">
-                  Dimensions (Width x Height)
-                </label>
+                <label className="block text-cyan-400 mb-2">Dimensions (Width x Height)</label>
                 <input
                   type="text"
                   value={newSpace.dimensions}
-                  onChange={(e) =>
-                    setNewSpace({ ...newSpace, dimensions: e.target.value })
-                  }
+                  onChange={(e) => setNewSpace({ ...newSpace, dimensions: e.target.value })}
                   className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                   placeholder="e.g., 10x10"
                   required
@@ -533,9 +487,7 @@ const GameDashboard: React.FC = () => {
                 <input
                   type="text"
                   value={newSpace.mapId || ""}
-                  onChange={(e) =>
-                    setNewSpace({ ...newSpace, mapId: e.target.value })
-                  }
+                  onChange={(e) => setNewSpace({ ...newSpace, mapId: e.target.value })}
                   className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                   placeholder="Enter map ID if available"
                 />
@@ -544,9 +496,7 @@ const GameDashboard: React.FC = () => {
                 <label className="block text-cyan-400 mb-2">Difficulty Level</label>
                 <select
                   value={newSpace.difficulty}
-                  onChange={(e) =>
-                    setNewSpace({ ...newSpace, difficulty: e.target.value })
-                  }
+                  onChange={(e) => setNewSpace({ ...newSpace, difficulty: e.target.value })}
                   className="w-full bg-black/50 border border-cyan-700/50 text-cyan-100 px-4 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                 >
                   <option value="Easy">Easy</option>
