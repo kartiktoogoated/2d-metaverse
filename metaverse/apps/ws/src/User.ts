@@ -1,7 +1,6 @@
 import { WebSocket } from "ws";
 import { RoomManager } from "./RoomManager";
 import { OutgoingMessage } from "./types";
-// Removed jwt and JWT_PASSWORD import since we no longer need token verification
 import client from "@repo/db/client";
 
 function getRandomString(length: number) {
@@ -15,10 +14,11 @@ function getRandomString(length: number) {
 }
 
 export class User {
+  // We'll use 'id' internally, but 'userId' is what we send to the client.
   public id: string;
-  // We'll use userId to identify the authenticated user.
-  public userId?: string;
-  private spaceId?: string;
+  public userId!: string;  // <--- definite assignment (!)
+  private spaceId!: string; // <--- definite assignment (!)
+  
   private x: number;
   private y: number;
   private ws: WebSocket;
@@ -33,46 +33,52 @@ export class User {
 
   initHandlers() {
     this.ws.on("message", async (data) => {
-      console.log(data);
       const parsedData = JSON.parse(data.toString());
-      console.log(parsedData, "parsedData");
+      console.log("WS Received:", parsedData);
+
       switch (parsedData.type) {
         case "join": {
           console.log("join received");
           const spaceId = parsedData.payload.spaceId;
-          // Instead of extracting a token and verifying it,
-          // assume the user is already authenticated.
-          // You could also retrieve the user id from the WebSocket handshake or session.
-          // For now, we'll simply use the generated connection id.
+
+          // For now, just assume user is authenticated
+          // We'll use 'id' as the userId
           this.userId = this.id;
-          const space = await client.space.findFirst({
-            where: {
-              id: spaceId,
-            },
-          });
+
+          // Check if space exists in DB
+          const space = await client.space.findFirst({ where: { id: spaceId } });
           if (!space) {
             this.ws.close();
             return;
           }
+
+          // Add this user to the room
           this.spaceId = spaceId;
           RoomManager.getInstance().addUser(spaceId, this);
-          // Spawn position is random based on space dimensions
+
+          // Random spawn
           this.x = Math.floor(Math.random() * space.width);
           this.y = Math.floor(Math.random() * space.height);
+
+          // Send "space-joined" back to the new user
           this.send({
             type: "space-joined",
             payload: {
-              spawn: {
-                x: this.x,
-                y: this.y,
-              },
-              // Here we send only minimal user info for existing users.
+              spawn: { x: this.x, y: this.y },
+              userId: this.userId, // send them their userId
+              // existing users in this space
               users:
                 RoomManager.getInstance().rooms.get(spaceId)
-                  ?.filter((u) => u.id !== this.id)
-                  ?.map((u) => ({ id: u.id })) ?? [],
+                  ?.filter((u) => u.id !== this.id) // exclude self
+                  ?.map((u) => ({
+                    userId: u.userId,
+                    x: u.x,
+                    y: u.y,
+                  })) ?? [],
             },
           });
+
+          // Broadcast "user-joined" to everyone else
           RoomManager.getInstance().broadcast(
             {
               type: "user-joined",
@@ -83,49 +89,59 @@ export class User {
               },
             },
             this,
-            this.spaceId!
+            this.spaceId
           );
           break;
         }
+
         case "move": {
           const moveX = parsedData.payload.x;
           const moveY = parsedData.payload.y;
+
+          // simple check: only allow 1-tile moves
           const xDisplacement = Math.abs(this.x - moveX);
           const yDisplacement = Math.abs(this.y - moveY);
+
           if (
             (xDisplacement === 1 && yDisplacement === 0) ||
             (xDisplacement === 0 && yDisplacement === 1)
           ) {
             this.x = moveX;
             this.y = moveY;
+
+            // Broadcast movement with userId
             RoomManager.getInstance().broadcast(
               {
                 type: "movement",
                 payload: {
                   x: this.x,
                   y: this.y,
+                  userId: this.userId,
                 },
               },
               this,
-              this.spaceId!
+              this.spaceId
             );
-            return;
+          } else {
+            // invalid move => reject
+            this.send({
+              type: "movement-rejected",
+              payload: {
+                x: this.x,
+                y: this.y,
+              },
+            });
           }
-          this.send({
-            type: "movement-rejected",
-            payload: {
-              x: this.x,
-              y: this.y,
-            },
-          });
           break;
         }
-        // You can add more cases as needed
+
+        // more cases...
       }
     });
   }
 
   destroy() {
+    // broadcast user-left
     RoomManager.getInstance().broadcast(
       {
         type: "user-left",
@@ -134,12 +150,17 @@ export class User {
         },
       },
       this,
-      this.spaceId!
+      this.spaceId
     );
-    RoomManager.getInstance().removeUser(this, this.spaceId!);
+    // remove from the room
+    RoomManager.getInstance().removeUser(this, this.spaceId);
   }
 
   send(payload: OutgoingMessage) {
     this.ws.send(JSON.stringify(payload));
   }
+
+  // optional: getters if you need them
+  get xPos() { return this.x; }
+  get yPos() { return this.y; }
 }

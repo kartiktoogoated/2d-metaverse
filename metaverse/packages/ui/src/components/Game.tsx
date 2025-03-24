@@ -81,7 +81,7 @@ const Game = () => {
       return;
     }
 
-    const ws = new WebSocket('ws://172.31.93.125:3001');
+    const ws = new WebSocket('ws://98.82.0.57:3001');
     wsRef.current = ws;
 
     ws.onopen = () => {
