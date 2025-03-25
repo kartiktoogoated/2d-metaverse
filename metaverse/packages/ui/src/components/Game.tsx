@@ -2,7 +2,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Room, RoomEvent, RemoteTrack, Track, VideoPresets } from 'livekit-client';
+import {
+  Room,
+  RoomEvent,
+  RemoteTrack,
+  Track,
+  TrackPublication,
+  VideoPresets,
+} from 'livekit-client';
 import { ArrowLeft, Users, Wifi, WifiOff, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Avatar from './Avatar';
@@ -25,22 +32,19 @@ function clampTileX(x: number) {
   const maxTileX = CANVAS_WIDTH / TILE_SIZE - 1;
   return Math.min(Math.max(x, 0), maxTileX);
 }
-
 function clampTileY(y: number) {
   const maxTileY = CANVAS_HEIGHT / TILE_SIZE - 1;
   return Math.min(Math.max(y, 0), maxTileY);
 }
-
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);
 }
 
 const Game = () => {
   const navigate = useNavigate();
+
+  // Canvas & game movement
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const localVideoRef = useRef<HTMLVideoElement | null>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [pixelPos, setPixelPos] = useState({ x: 0, y: 0 });
   const [users, setUsers] = useState(new Map());
@@ -49,27 +53,22 @@ const Game = () => {
   const [isMoving, setIsMoving] = useState(false);
   const [isTweening, setIsTweening] = useState(false);
   const [direction, setDirection] = useState<"left" | "right">("right");
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // LiveKit state
   const [videoRoom, setVideoRoom] = useState<Room | null>(null);
   const [livekitToken, setLivekitToken] = useState('');
-  const [notifications, setNotifications] = useState<string[]>([]);
   const [videoStarted, setVideoStarted] = useState(false);
+  const [roomConnected, setRoomConnected] = useState(false);
 
-  // Resume AudioContext on user interaction (helps satisfy autoplay policies)
-  useEffect(() => {
-    const resumeAudioContext = () => {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        if (ctx.state === 'suspended') {
-          ctx.resume().then(() => console.log('AudioContext resumed'));
-        }
-      }
-    };
-    window.addEventListener('click', resumeAudioContext);
-    return () => window.removeEventListener('click', resumeAudioContext);
-  }, []);
+  // Notifications
+  const [notifications, setNotifications] = useState<string[]>([]);
 
-  // Set up WebSocket and join the space using the spaceId from the URL
+  // Video elements
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // 1) Set up WebSocket for game logic
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const spaceId = urlParams.get('spaceId') || '';
@@ -103,14 +102,13 @@ const Game = () => {
     return () => ws.close();
   }, []);
 
-  // Fetch LiveKit token from backend using spaceId
+  // 2) Fetch LiveKit token from backend
   useEffect(() => {
     async function fetchToken() {
       if (!params.spaceId) return;
       try {
-        // Make sure your backend mounts the LiveKit router at /api/v1/livekit-token
         const res = await fetch(`${API_BASE_URL}/api/v1/livekit?spaceId=${params.spaceId}`, {
-          credentials: 'include'
+          credentials: 'include',
         });
         const data = await res.json();
         if (data.token) setLivekitToken(data.token);
@@ -121,34 +119,51 @@ const Game = () => {
     fetchToken();
   }, [params.spaceId]);
 
-  // Join the LiveKit video room using the fetched token
+  // 3) Join LiveKit room (DISABLE adaptive streaming & dynacast)
   useEffect(() => {
     async function joinVideoRoom() {
       if (!livekitToken) return;
+
+      // Turn off adaptiveStream & dynacast to prevent video freezing
       const room = new Room({
-        adaptiveStream: true,
-        dynacast: true,
+        adaptiveStream: false,
+        dynacast: false,
         videoCaptureDefaults: { resolution: VideoPresets.h720.resolution },
       });
-      room.prepareConnection(LIVEKIT_URL, livekitToken);
+
+      room.on(RoomEvent.Connected, () => {
+        console.log("LiveKit room connected!");
+        setRoomConnected(true);
+      });
+
+      room.on(RoomEvent.Disconnected, () => {
+        console.log("LiveKit room disconnected!");
+        setRoomConnected(false);
+        addNotification("Video chat disconnected");
+      });
 
       room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {
-        if (
-          (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) &&
-          remoteVideoRef.current
-        ) {
+        console.log("Track subscribed:", track.kind);
+        if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
           const element = track.attach();
           remoteVideoRef.current.srcObject = (element as HTMLVideoElement).srcObject;
+          // Attempt to play
+          if (remoteVideoRef.current.paused) {
+            remoteVideoRef.current.play().catch((err) => {
+              console.error("Error playing remote video:", err);
+            });
+          }
         }
       });
-      room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => track.detach());
-      room.on(RoomEvent.Disconnected, () => addNotification("Video chat disconnected"));
+
+      room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
+        track.detach();
+      });
 
       try {
         await room.connect(LIVEKIT_URL, livekitToken);
         setVideoRoom(room);
         addNotification("Connected to video room");
-        // Do not auto-enable camera/mic; wait for user gesture.
       } catch (error) {
         console.error("Error joining video room:", error);
       }
@@ -160,18 +175,37 @@ const Game = () => {
     };
   }, [livekitToken]);
 
-  // User-triggered function to start video chat after a gesture.
+  // 4) Start video chat: enable camera & mic, attach local camera
   const startVideoChat = async () => {
-    if (!videoRoom) return;
-    // Check if the browser supports getUserMedia
+    console.log("startVideoChat clicked. Video room state:", videoRoom?.state);
+
+    if (!videoRoom || !roomConnected) {
+      alert("Video room not connected yet, please wait.");
+      return;
+    }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       alert("Your browser does not support camera/microphone access.");
       return;
     }
     try {
-      // Use LiveKit's recommended methods to enable camera and mic
       await videoRoom.localParticipant.setCameraEnabled(true);
       await videoRoom.localParticipant.setMicrophoneEnabled(true);
+
+      // Attach local camera track
+      const trackPubs = videoRoom.localParticipant.getTrackPublications();
+      const cameraPub = trackPubs.find((pub: TrackPublication) => {
+        return pub.track && pub.track.kind === Track.Kind.Video;
+      });
+      if (cameraPub?.track && localVideoRef.current) {
+        const element = cameraPub.track.attach();
+        localVideoRef.current.srcObject = (element as HTMLVideoElement).srcObject;
+        if (localVideoRef.current.paused) {
+          localVideoRef.current.play().catch((err) =>
+            console.error("Error playing local video:", err)
+          );
+        }
+      }
+
       setVideoStarted(true);
       addNotification("Video chat started");
     } catch (error) {
@@ -179,19 +213,22 @@ const Game = () => {
     }
   };
 
+  // Helper: notifications
   const addNotification = (message: string) => {
-    setNotifications((prev) => [...prev, message]);
+    setNotifications((prev: string[]) => [...prev, message]);
     setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n !== message));
+      setNotifications((prev: string[]) => prev.filter((n) => n !== message));
     }, 3000);
   };
 
+  // Helper: send WebSocket message
   const sendMessage = (message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     }
   };
 
+  // Handle WebSocket messages (game movement)
   const handleWebSocketMessage = (message: any) => {
     switch (message.type) {
       case 'space-joined': {
@@ -252,6 +289,7 @@ const Game = () => {
     }
   };
 
+  // Draw map features & background
   const drawMapFeature = (ctx: CanvasRenderingContext2D, feature: typeof MAP_FEATURES[0]) => {
     ctx.save();
     switch (feature.type) {
@@ -329,6 +367,7 @@ const Game = () => {
     MAP_FEATURES.forEach((feature) => drawMapFeature(ctx, feature));
   }, [currentUser, users]);
 
+  // Movement logic (arrow keys)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!currentUser || !isConnected || isTweening) return;
@@ -350,7 +389,9 @@ const Game = () => {
       }
       tweenToTile(newTileX, newTileY);
     };
-    const handleKeyUp = () => { if (!isTweening) setIsMoving(false); };
+    const handleKeyUp = () => {
+      if (!isTweening) setIsMoving(false);
+    };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
@@ -359,6 +400,7 @@ const Game = () => {
     };
   }, [currentUser, isConnected, isTweening]);
 
+  // Tween movement
   const tweenToTile = (targetTileX: number, targetTileY: number) => {
     setIsTweening(true);
     const startX = pixelPos.x;
@@ -391,6 +433,7 @@ const Game = () => {
     requestAnimationFrame(animate);
   };
 
+  // Camera offset
   const [viewportWidth, viewportHeight] = [window.innerWidth, window.innerHeight];
   const halfW = viewportWidth / 2;
   const halfH = viewportHeight / 2;
@@ -419,7 +462,12 @@ const Game = () => {
             }}
             className="bg-gradient-to-br from-emerald-900/20 to-cyan-900/20"
           >
-            <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="absolute inset-0" />
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              className="absolute inset-0"
+            />
             <div className="absolute inset-0">
               {currentUser && (
                 <Avatar
@@ -459,20 +507,31 @@ const Game = () => {
           </button>
           <div className="flex items-center gap-4">
             <motion.div
-              animate={{ scale: isConnected ? [1, 1.2, 1] : 1, transition: { repeat: Infinity, duration: 2 } }}
+              animate={{
+                scale: isConnected ? [1, 1.2, 1] : 1,
+                transition: { repeat: Infinity, duration: 2 },
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-cyan-950/50 backdrop-blur-sm rounded-lg"
             >
-              {isConnected ? <Wifi className="text-green-400" size={20} /> : <WifiOff className="text-red-400" size={20} />}
-              <span className="text-cyan-300">{isConnected ? "Connected" : "Disconnected"}</span>
+              {isConnected ? (
+                <Wifi className="text-green-400" size={20} />
+              ) : (
+                <WifiOff className="text-red-400" size={20} />
+              )}
+              <span className="text-cyan-300">
+                {isConnected ? "Connected" : "Disconnected"}
+              </span>
             </motion.div>
             <div className="flex items-center gap-2 px-4 py-2 bg-cyan-950/50 backdrop-blur-sm rounded-lg">
               <Users className="text-cyan-400" size={20} />
-              <span className="text-cyan-300">{users.size + (currentUser ? 1 : 0)} Players</span>
+              <span className="text-cyan-300">
+                {users.size + (currentUser ? 1 : 0)} Players
+              </span>
             </div>
           </div>
         </motion.div>
 
-        <div className="absolute top-20 right-4 space-y-2">
+        <div className="absolute top-20 right-4 space-y-2 pointer-events-auto">
           <AnimatePresence>
             {notifications.map((notification, index) => (
               <motion.div
@@ -496,8 +555,21 @@ const Game = () => {
               Video Chat
             </h2>
             <div className="grid grid-cols-2 gap-2">
-              <video ref={localVideoRef} autoPlay muted className="w-32 h-24 rounded bg-black/50" />
-              <video ref={remoteVideoRef} autoPlay className="w-32 h-24 rounded bg-black/50" />
+              {/* Local camera on the left */}
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-32 h-24 rounded bg-black/50"
+              />
+              {/* Remote camera on the right */}
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-32 h-24 rounded bg-black/50"
+              />
             </div>
             {!videoStarted && (
               <button
