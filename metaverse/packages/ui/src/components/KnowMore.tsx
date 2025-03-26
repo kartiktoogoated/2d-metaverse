@@ -21,6 +21,7 @@ import {
   Shield,
   Layers,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const KnowMore: React.FC = () => {
   const sectionsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -821,9 +822,20 @@ const KnowMore: React.FC = () => {
                 <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-6 h-6 text-cyan-400" />
                 </div>
-                <span className="text-xl font-bold text-cyan-300">
-                  Metaverse 2D
-                </span>
+              <motion.h1
+              className="text-6xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400 font-extrabold"
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              style={{ backgroundSize: "200% 200%" }}
+            >
+              METAVERSE 2D
+            </motion.h1>
               </div>
               <p className="text-cyan-400 mb-4">
                 A next-generation platform for virtual collaboration and social

@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { LogIn, Eye, EyeOff, Sun, Moon, Gamepad2 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL!;
 
-function VideoCard() {
+function AuthForm() {
   const navigate = useNavigate();
   const [isSignIn, setIsSignIn] = useState(true);
   const [eyeOn, setEyeOn] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -16,19 +18,17 @@ function VideoCard() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle form submission (Sign Up or Sign In)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     const endpoint = isSignIn ? "/api/v1/signin" : "/api/v1/signup";
-    const apiUrl = API_BASE_URL`${endpoint}`;
+    const apiUrl = `${API_BASE_URL}${endpoint}`;
 
     if (!isSignIn && formData.password !== formData.confirmPassword) {
       setError("Passwords do not match!");
@@ -45,32 +45,27 @@ function VideoCard() {
             confirmPassword: formData.confirmPassword,
           };
 
-      console.log("📡 Sending request to API:", payload);
-
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include", // ✅ Ensures cookies or tokens are sent
+        credentials: "include",
       });
 
       const data = await response.json();
-      console.log("✅ API Response:", data);
 
       if (!response.ok) {
         throw new Error(data.message || "Authentication failed");
       }
 
       if (isSignIn) {
-        localStorage.setItem("token", data.token); // ✅ Store JWT
-        alert("✅ Login successful!");
+        localStorage.setItem("token", data.token);
         navigate("/dashboard");
       } else {
-        alert("✅ Signup successful! Please log in.");
         setIsSignIn(true);
       }
     } catch (err: any) {
-      console.error("❌ Error:", err.message);
+      console.error("Error:", err.message);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -78,102 +73,189 @@ function VideoCard() {
   };
 
   return (
-    <>
-      <div className="h-screen w-full flex justify-center items-center">
-        <div className="bg-white text-[#111828] rounded-3xl flex flex-col items-center p-[3%] gap-5">
-          <div className="text-center">
-            <h2 className="font-bold text-[30px]">Welcome to Metaverse</h2>
-            <h3 className="text-gray-800 text-[20px]">
-              {isSignIn ? "Sign in to continue" : "Create an account"}
-            </h3>
+    <div 
+      className={`min-h-screen w-full flex justify-center items-center transition-all duration-500 ${
+        isDarkMode 
+          ? "bg-[#0a1a1f] text-[#4fd1c5]" 
+          : "bg-white text-[#2c7a7b]"
+      }`}
+      style={{
+        backgroundImage: isDarkMode 
+          ? "radial-gradient(circle at 50% 50%, rgba(79, 209, 197, 0.03) 0%, transparent 50%)"
+          : "radial-gradient(circle at 50% 50%, rgba(44, 122, 123, 0.05) 0%, transparent 50%)"
+      }}
+    >
+      {/* Dark/Light Mode Toggle Icon */}
+      <button
+        onClick={() => setIsDarkMode(!isDarkMode)}
+        className={`absolute top-4 right-4 p-3 rounded-full transition-all duration-300 ${
+          isDarkMode 
+            ? "bg-[#1a2e35] text-[#4fd1c5]" 
+            : "bg-[#e6fffa] text-[#2c7a7b] shadow-lg"
+        }`}
+        aria-label="Toggle theme"
+      >
+        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
+
+      <div 
+        className={`w-full max-w-md mx-4 rounded-xl overflow-hidden transition-all duration-500 transform ${
+          isDarkMode 
+            ? "bg-[#1a2e35] shadow-xl" 
+            : "bg-white shadow-2xl"
+        }`}
+      >
+        <div className="p-8">
+          <div className="flex flex-col items-center mb-8 animate-fadeIn">
+            <div className={`p-3 rounded-full mb-4 transition-all duration-500 ${
+              isDarkMode ? "bg-[#243942]" : "bg-[#e6fffa]"
+            }`}>
+              <Gamepad2 
+                size={28} 
+                className={`transition-all duration-500 ${
+                  isDarkMode ? "text-[#4fd1c5]" : "text-[#2c7a7b]"
+                }`} 
+              />
+            </div>
+            <h2 className="text-3xl font-semibold mb-2 tracking-wide animate-slideDown">
+              Metaverse 2D
+            </h2>
+            <div className="space-y-1 text-center">
+              <p className={`text-sm transition-all duration-500 ${
+                isDarkMode ? "text-[#4fd1c5]/70" : "text-[#2c7a7b]/70"
+              }`}>
+                Welcome to the digital realm
+              </p>
+            </div>
           </div>
 
-          {error && <p className="text-red-500 text-center">{error}</p>}
+          {error && (
+            <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center animate-shake">
+              {error}
+            </div>
+          )}
 
-          <form
-            className="flex flex-col gap-2 w-full text-[#111828] font-bold p-[2%]"
-            onSubmit={handleSubmit}
-          >
-            <label htmlFor="username">Username</label>
-            <input
-              className="border-2 border-gray-200 rounded-lg h-[40px] text-black font-normal px-3"
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              autoComplete="current-username"
-              required
-            />
-
-            <label htmlFor="password">Password</label>
-            <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="animate-slideUp">
+              <label htmlFor="username" className={`block text-sm font-medium mb-2 transition-all duration-500 ${
+                isDarkMode ? "text-[#4fd1c5]/90" : "text-[#2c7a7b]/90"
+              }`}>
+                Username
+              </label>
               <input
-                className="border-2 w-full border-gray-200 rounded-lg h-[40px] text-black font-normal px-3"
-                type={eyeOn ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
+                className={`w-full px-4 py-2.5 rounded-lg outline-none transition-all duration-300 ${
+                  isDarkMode 
+                    ? "bg-[#243942] text-[#4fd1c5] placeholder-[#4fd1c5]/30 focus:ring-2 focus:ring-[#4fd1c5]/20" 
+                    : "bg-[#e6fffa] text-[#2c7a7b] placeholder-[#2c7a7b]/30 focus:ring-2 focus:ring-[#2c7a7b]/20"
+                }`}
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
-                autoComplete="current-password"
+                autoComplete="username"
                 required
+                placeholder="Enter username"
               />
-              {eyeOn ? (
-                <EyeOff
-                  size={20}
-                  className="absolute right-3 top-[50%] -translate-y-[50%]"
-                  onClick={() => setEyeOn(!eyeOn)}
+            </div>
+
+            <div className="animate-slideUp" style={{ animationDelay: "100ms" }}>
+              <label htmlFor="password" className={`block text-sm font-medium mb-2 transition-all duration-500 ${
+                isDarkMode ? "text-[#4fd1c5]/90" : "text-[#2c7a7b]/90"
+              }`}>
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  className={`w-full px-4 py-2.5 rounded-lg outline-none transition-all duration-300 ${
+                    isDarkMode 
+                      ? "bg-[#243942] text-[#4fd1c5] placeholder-[#4fd1c5]/30 focus:ring-2 focus:ring-[#4fd1c5]/20" 
+                      : "bg-[#e6fffa] text-[#2c7a7b] placeholder-[#2c7a7b]/30 focus:ring-2 focus:ring-[#2c7a7b]/20"
+                  }`}
+                  type={eyeOn ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete="current-password"
+                  required
+                  placeholder="Enter password"
                 />
-              ) : (
-                <Eye
-                  size={20}
-                  className="absolute right-3 top-[50%] -translate-y-[50%]"
+                <button
+                  type="button"
                   onClick={() => setEyeOn(!eyeOn)}
-                />
-              )}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-300 ${
+                    isDarkMode 
+                      ? "text-[#4fd1c5]/50" 
+                      : "text-[#2c7a7b]/50"
+                  }`}
+                >
+                  {eyeOn ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             {!isSignIn && (
-              <>
-                <label htmlFor="confirmPassword">Confirm Password</label>
+              <div className="animate-slideUp" style={{ animationDelay: "200ms" }}>
+                <label htmlFor="confirmPassword" className={`block text-sm font-medium mb-2 transition-all duration-500 ${
+                  isDarkMode ? "text-[#4fd1c5]/90" : "text-[#2c7a7b]/90"
+                }`}>
+                  Confirm Password
+                </label>
                 <input
-                  className="border-2 border-gray-200 rounded-lg h-[40px] text-black font-normal px-3"
+                  className={`w-full px-4 py-2.5 rounded-lg outline-none transition-all duration-300 ${
+                    isDarkMode 
+                      ? "bg-[#243942] text-[#4fd1c5] placeholder-[#4fd1c5]/30 focus:ring-2 focus:ring-[#4fd1c5]/20" 
+                      : "bg-[#e6fffa] text-[#2c7a7b] placeholder-[#2c7a7b]/30 focus:ring-2 focus:ring-[#2c7a7b]/20"
+                  }`}
                   type="password"
                   id="confirmPassword"
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
+                  placeholder="Confirm password"
                 />
-              </>
+              </div>
             )}
 
             <button
               type="submit"
-              className="bg-[#111828] mt-2 text-white rounded-lg p-3 hover:bg-sky-950 flex justify-center gap-2"
               disabled={loading}
+              className={`w-full py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-300 animate-slideUp ${
+                isDarkMode
+                  ? "bg-[#4fd1c5] text-[#0a1a1f]"
+                  : "bg-[#2c7a7b] text-white"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              style={{ animationDelay: "300ms" }}
             >
-              <LogIn />
+              <LogIn size={18} />
               {loading ? "Processing..." : isSignIn ? "Sign In" : "Sign Up"}
             </button>
           </form>
 
-          <div className="flex gap-4">
-            <p className="text-[#111828]">
+          <div className="mt-6 text-center animate-fadeIn" style={{ animationDelay: "400ms" }}>
+            <p className={`text-sm transition-all duration-500 ${
+              isDarkMode ? "text-[#4fd1c5]/70" : "text-[#2c7a7b]/70"
+            }`}>
               {isSignIn ? "Don't have an account?" : "Already have an account?"}
+              <button
+                onClick={() => setIsSignIn(!isSignIn)}
+                className={`ml-2 font-medium transition-colors ${
+                  isDarkMode 
+                    ? "text-[#4fd1c5]" 
+                    : "text-[#2c7a7b]"
+                }`}
+              >
+                {isSignIn ? "Sign Up" : "Sign In"}
+              </button>
             </p>
-            <button
-              className="hover:underline hover:cursor-pointer"
-              onClick={() => setIsSignIn(!isSignIn)}
-            >
-              {isSignIn ? "Sign Up" : "Sign In"}
-            </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
-export default VideoCard;
+export default AuthForm;

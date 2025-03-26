@@ -1,4 +1,3 @@
-// App.tsx
 import {
   Suspense,
   lazy,
