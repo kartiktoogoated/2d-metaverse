@@ -16,6 +16,7 @@ import Avatar from './Avatar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL!;
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL!;
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL!;
 
 const TILE_SIZE = 50;
 const CANVAS_WIDTH = 1600;
@@ -80,7 +81,7 @@ const Game = () => {
       return;
     }
 
-    const ws = new WebSocket('ws://98.82.0.57:3001');
+    const ws = new WebSocket(`${WS_BASE_URL}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

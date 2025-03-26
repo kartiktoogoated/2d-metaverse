@@ -17,9 +17,11 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import Chatbot from "./ChatBot"; // adjust the path as needed
+import Chatbot from "./ChatBot"; 
 import { AvatarManager } from "./AvatarManager";
 import { ElementManager } from "./ElementManager";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL!;
 
 interface PlayerStats {
   rank: number;
@@ -28,8 +30,18 @@ interface PlayerStats {
   isOnline: boolean;
 }
 
+interface CurrentUser {
+  username: string;
+}
+
 const GameDashboard: React.FC = () => {
   const navigate = useNavigate();
+  
+  // Define a currentUser state so we can display the username in the header.
+  const [currentUser] = useState<CurrentUser>({
+    username: localStorage.getItem("username") || "Player",
+  });
+  
   const [spaces, setSpaces] = useState<
     {
       id: string;
@@ -85,7 +97,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch("http://98.82.0.57:3002/api/v1/space/all", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/space/all`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -108,7 +120,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch("http://98.82.0.57:3002/api/v1/space", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/space`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -151,7 +163,7 @@ const GameDashboard: React.FC = () => {
         console.error("❌ No token found");
         return;
       }
-      const response = await fetch(`http://98.82.0.57:3002/api/v1/space/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/space/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -232,7 +244,7 @@ const GameDashboard: React.FC = () => {
         <div className="flex justify-between items-center mb-12">
           <div>
             <h1 className="text-4xl font-bold text-cyan-300 mb-2">
-              Welcome back,
+              Welcome back, {currentUser.username || "Player"}!
             </h1>
             <p className="text-cyan-400">
               Your next mission awaits in the digital realm

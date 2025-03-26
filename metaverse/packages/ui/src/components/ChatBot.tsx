@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL!;
 
 interface ChatMessage {
   sender: "bot" | "user";
@@ -30,7 +31,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ show, onClose }) => {
 
     try {
       const response = await fetch(
-        "http://98.82.0.57:3002/api/v1/chatbot/run",
+        `${API_BASE_URL}/api/v1/chatbot/run`,
         {
           method: "POST",
           headers: {
