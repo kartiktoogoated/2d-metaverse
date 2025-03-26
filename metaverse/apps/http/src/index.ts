@@ -4,6 +4,8 @@ import { chatbotRouter } from "./chatbot";
 import { corsMiddleware } from "./middleware/cors";
 import 'dotenv/config';
 
+const API_BASE_URL = process.env.API_BASE_URL!;
+
 const app = express();
 app.use(corsMiddleware);
 app.use(express.json());
@@ -22,5 +24,5 @@ app._router.stack.forEach((r: any) => {
 export {app};
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on AWS at http://98.82.0.57:${PORT}`);
+  console.log(`🚀 Server running on AWS at ${API_BASE_URL}:${PORT}`);
 });
