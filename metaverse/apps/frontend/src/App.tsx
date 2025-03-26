@@ -13,7 +13,7 @@ import {
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
 // Direct imports for smaller or critical components
-import AuthForm from "./AuthForm";
+import AuthForm from "@repo/ui/components/AuthForm";
 import ScrambleOnHover from "./ScrambleOnHover";
 import PrivateRoute from "./PrivateRoute";
 import Navbar from "@repo/ui/components/Navbar.js"; // or wherever your Navbar is stored

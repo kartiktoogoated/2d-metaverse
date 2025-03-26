@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+const API_BASE_URL = process.env.VITE_API_BASE_URL!;
 
 export default defineConfig({
   // Point to the directory that contains your .env file
@@ -19,7 +20,7 @@ export default defineConfig({
     cors: true,
     proxy: {
       "/api": {
-        target: "http://98.82.0.57:3002",
+        target: `${API_BASE_URL}`,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ""),
