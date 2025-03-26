@@ -22,12 +22,14 @@ export class User {
   private x: number;
   private y: number;
   private ws: WebSocket;
+  private username: string;
 
   constructor(ws: WebSocket) {
     this.id = getRandomString(10);
     this.x = 0;
     this.y = 0;
     this.ws = ws;
+    this.username = `Player_${this.id}`; // Set a default username (or fetch from DB)
     this.initHandlers();
   }
 
@@ -66,12 +68,14 @@ export class User {
             payload: {
               spawn: { x: this.x, y: this.y },
               userId: this.userId, // send them their userId
+              username: this.username, // send the username to the client
               // existing users in this space
               users:
                 RoomManager.getInstance().rooms.get(spaceId)
                   ?.filter((u) => u.id !== this.id) // exclude self
                   ?.map((u) => ({
                     userId: u.userId,
+                    username: u.username, // send username for other users
                     x: u.x,
                     y: u.y,
                   })) ?? [],
@@ -84,6 +88,7 @@ export class User {
               type: "user-joined",
               payload: {
                 userId: this.userId,
+                username: this.username, // Send the username
                 x: this.x,
                 y: this.y,
               },
