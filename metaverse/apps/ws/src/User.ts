@@ -23,6 +23,8 @@ export class User {
   private y: number;
   private ws: WebSocket;
   private username: string;
+  private lastActivity: number;
+  private idleCheckInterval: NodeJS.Timeout | null = null;
 
   constructor(ws: WebSocket) {
     this.id = getRandomString(10);
@@ -31,10 +33,15 @@ export class User {
     this.ws = ws;
     this.username = `Player_${this.id}`; // Set a default username (or fetch from DB)
     this.initHandlers();
+    this.lastActivity = Date.now();
+    this.startIdleCheck();
   }
-
+  
   initHandlers() {
     this.ws.on("message", async (data) => {
+      // Update last activity timestamp for every incoming message
+      this.lastActivity = Date.now();
+
       const parsedData = JSON.parse(data.toString());
       console.log("WS Received:", parsedData);
 
@@ -143,10 +150,41 @@ export class User {
         // more cases...
       }
     });
+
+    // Ensure that on WebSocket close, we clean up the user
+    this.ws.on("close", () => {
+      this.destroy();
+    });
+  }
+
+  private startIdleCheck() {
+    this.idleCheckInterval = setInterval(() => {
+      const now = Date.now();
+      const minutesIdle = (now - this.lastActivity) / (1000 * 60);
+
+      // Retrieve current room users from RoomManager
+      const room = RoomManager.getInstance().rooms.get(this.spaceId);
+      const userCount = room ? room.length : 0;
+
+      if (minutesIdle >= 5 && userCount <= 1) {
+        console.log(`User ${this.userId} is idle for ${minutesIdle.toFixed(2)} minutes and alone. Kicking...`);
+        this.send({
+          type: "idle-kick",
+          payload: {
+            reason: "You were idle for more than 5 minutes and no one else was in the room.",
+          },
+        });
+        this.ws.close(); // This will trigger the "close" event and cleanup via destroy()
+      }
+    }, 60 * 1000); // Check every minute
   }
 
   destroy() {
-    // broadcast user-left
+    // Clear the idle check interval if it exists
+    if (this.idleCheckInterval) {
+      clearInterval(this.idleCheckInterval);
+    }
+    // Broadcast that the user has left
     RoomManager.getInstance().broadcast(
       {
         type: "user-left",
@@ -157,7 +195,7 @@ export class User {
       this,
       this.spaceId
     );
-    // remove from the room
+    // Remove the user from the room
     RoomManager.getInstance().removeUser(this, this.spaceId);
   }
 
@@ -165,7 +203,7 @@ export class User {
     this.ws.send(JSON.stringify(payload));
   }
 
-  // optional: getters if you need them
+  // Optional getters for x and y positions
   get xPos() { return this.x; }
   get yPos() { return this.y; }
 }
