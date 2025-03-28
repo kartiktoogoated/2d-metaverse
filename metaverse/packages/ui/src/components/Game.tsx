@@ -287,6 +287,13 @@ const Game = () => {
         });
         break;
       }
+      case 'idle-kick': {
+        // When idle-kick is received, notify the user and redirect or clean up
+        addNotification("You have been kicked for being idle for too long.");
+        // Optionally navigate the user to a different page:
+        navigate('/dashboard');
+        break;
+      }
     }
   };
 
