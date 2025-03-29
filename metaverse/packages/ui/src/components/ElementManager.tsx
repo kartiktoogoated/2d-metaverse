@@ -9,6 +9,9 @@ interface Element {
   image_url: string;
 }
 
+// Use Vite's environment variable (make sure your .env has VITE_API_BASE_URL)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const ElementManager: React.FC = () => {
   const [elements, setElements] = useState<Element[]>([]);
   const [showAddElement, setShowAddElement] = useState(false);
@@ -24,12 +27,16 @@ export const ElementManager: React.FC = () => {
 
   const fetchElements = async () => {
     try {
-      const response = await fetch('/api/v1/elements');
+      const response = await fetch(`${API_BASE_URL}/api/v1/elements`, {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error('Error fetching elements');
       }
       const data = await response.json();
-      setElements(data || []);
+      // If the API returns an object with an "elements" property, use it; otherwise, use data directly.
+      const elementsData = data.elements ? data.elements : data;
+      setElements(elementsData);
     } catch (error) {
       console.error('Error fetching elements:', error);
     }
@@ -39,16 +46,25 @@ export const ElementManager: React.FC = () => {
     try {
       if (!newElement.image_url) return;
 
-      const response = await fetch('/api/v1/elements', {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found. Make sure you are logged in as an admin.');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/element`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(newElement)
       });
 
       if (!response.ok) {
-        throw new Error('Error adding element');
+        const errorText = await response.text();
+        throw new Error(`Error adding element: ${errorText}`);
       }
 
       setShowAddElement(false);
@@ -61,12 +77,22 @@ export const ElementManager: React.FC = () => {
 
   const handleDeleteElement = async (id: string) => {
     try {
-      const response = await fetch(`/api/v1/elements/${id}`, {
-        method: 'DELETE'
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found. Make sure you are logged in as an admin.');
+        return;
+      }
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/element/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: 'include'
       });
 
       if (!response.ok) {
-        throw new Error('Error deleting element');
+        const errorText = await response.text();
+        throw new Error(`Error deleting element: ${errorText}`);
       }
       fetchElements();
     } catch (error) {
@@ -114,7 +140,6 @@ export const ElementManager: React.FC = () => {
         ))}
       </div>
 
-      {/* Add Element Modal */}
       {showAddElement && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-8">
           <motion.div
