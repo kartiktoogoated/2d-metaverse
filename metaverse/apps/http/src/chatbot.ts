@@ -1,6 +1,4 @@
-// src/routes/chatbot.ts
 import { Router, Request, Response } from "express";
-import dotenv from 'dotenv';
 import { info, warn, error } from "./utils/logger";
 
 export const chatbotRouter = Router();

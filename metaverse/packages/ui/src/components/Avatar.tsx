@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 
+const ASSET_BASE = "https://kartiktoogoated.s3.amazonaws.com/my-game-assets";
+
 interface AvatarProps {
   x: number;              // Pixel position x
   y: number;              // Pixel position y
@@ -7,15 +9,14 @@ interface AvatarProps {
   direction: "left" | "right"; // Flip sprite if left
 }
 
-const RUN_SPRITE_URL =
-  "http://kartiktoogoated.s3-website-us-east-1.amazonaws.com/my-game-assets/RUN.png";
-const IDLE_SPRITE_URL =
-  "http://kartiktoogoated.s3-website-us-east-1.amazonaws.com/my-game-assets/IDLE.png";
-const RUN_FRAMES = 8;
-const IDLE_FRAMES = 7;
-const FRAME_WIDTH = 64;
-const FRAME_HEIGHT = 64;
-const FRAME_INTERVAL = 120;
+export const RUN_SPRITE_URL  = `${ASSET_BASE}/RUN.png`;
+export const IDLE_SPRITE_URL = `${ASSET_BASE}/IDLE.png`;
+
+export const RUN_FRAMES     = 8;
+export const IDLE_FRAMES    = 7;
+export const FRAME_WIDTH    = 64;
+export const FRAME_HEIGHT   = 64;
+export const FRAME_INTERVAL = 120;
 
 function Avatar({ x, y, isMoving, direction }: AvatarProps) {
   const [imagesLoaded, setImagesLoaded] = useState(false);

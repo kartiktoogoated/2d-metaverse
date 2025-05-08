@@ -14,10 +14,9 @@ function getRandomString(length: number) {
 }
 
 export class User {
-  // We'll use 'id' internally, but 'userId' is what we send to the client.
   public id: string;
-  public userId!: string;  // <--- definite assignment (!)
-  private spaceId!: string; // <--- definite assignment (!)
+  public userId!: string;  
+  private spaceId!: string; 
   
   private x: number;
   private y: number;
@@ -31,7 +30,7 @@ export class User {
     this.x = 0;
     this.y = 0;
     this.ws = ws;
-    this.username = `Player_${this.id}`; // Set a default username (or fetch from DB)
+    this.username = `Player_${this.id}`; 
     this.initHandlers();
     this.lastActivity = Date.now();
     this.startIdleCheck();
@@ -39,7 +38,7 @@ export class User {
   
   initHandlers() {
     this.ws.on("message", async (data) => {
-      // Update last activity timestamp for every incoming message
+
       this.lastActivity = Date.now();
 
       const parsedData = JSON.parse(data.toString());
