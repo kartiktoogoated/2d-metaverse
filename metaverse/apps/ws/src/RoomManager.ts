@@ -28,6 +28,27 @@ export class RoomManager {
     }
 
     /**
+     * Ensure a room exists in memory.
+     * @param spaceId The room ID.
+     */
+    public ensureRoom(spaceId: string): void {
+        if (!this.rooms.has(spaceId)) {
+            this.rooms.set(spaceId, []);
+            Logger.info(`Room created for space: ${spaceId}`);
+        }
+    }
+
+    /**
+     * Add a user to a room.
+     * @param spaceId The room ID.
+     * @param user The user to add.
+     */
+    public addUser(spaceId: string, user: User): void {
+        this.ensureRoom(spaceId);
+        this.rooms.set(spaceId, [...(this.rooms.get(spaceId) ?? []), user]);
+    }
+
+    /**
      * Remove a user from a room.
      * @param user The user to remove.
      * @param spaceId The room ID.
@@ -37,20 +58,10 @@ export class RoomManager {
             Logger.warn(`Attempted to remove user from non-existent room: ${spaceId}`);
             return;
         }
-        this.rooms.set(spaceId, (this.rooms.get(spaceId)?.filter((u) => u.id !== user.id) ?? []));
-    }
-
-    /**
-     * Add a user to a room.
-     * @param spaceId The room ID.
-     * @param user The user to add.
-     */
-    public addUser(spaceId: string, user: User): void {
-        if (!this.rooms.has(spaceId)) {
-            this.rooms.set(spaceId, [user]);
-            return;
-        }
-        this.rooms.set(spaceId, [...(this.rooms.get(spaceId) ?? []), user]);
+        this.rooms.set(
+            spaceId,
+            (this.rooms.get(spaceId)?.filter((u) => u.id !== user.id) ?? [])
+        );
     }
 
     /**
